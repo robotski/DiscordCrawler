@@ -1,7 +1,7 @@
 import logging
 from logging.handlers import TimedRotatingFileHandler
 
-fh = TimedRotatingFileHandler(f"logs/bot.log", when="midnight", interval=1)
+fh = TimedRotatingFileHandler(f"logs/bot.log", when="midnight", interval=1, encoding='utf-8')
 fh.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s : %(message)s'))
 fh.setLevel(logging.INFO)
 ch = logging.StreamHandler()

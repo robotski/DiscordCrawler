@@ -33,6 +33,7 @@ STAFF = []
 TERMS = []
 GREYS = []
 REACTIONROLES = []
+STARBOARDS = []
 
 BLACKLIST = ""
 GREYLIST = ""
@@ -62,6 +63,18 @@ def loadReactionRoles(REACTIONROLESDB):
             reactionRole[key] = []
         reactionRole[key].append((i['roleId'], i['emoji']))
     return reactionRole
+
+
+def loadStarboards(STARBOARDSDB):
+    starboard = {}
+    for i in STARBOARDSDB:
+        # key = int(i['emoji'])
+        key = str(i['guild']) + i['emoji']
+        if key not in starboard:
+            starboard[key] = []
+        starboard[key].append((i['channel']))
+    return starboard
+
 
 async def fillBlackList(BLACKLIST, GUILDS):
     BLACKLIST = "["
@@ -114,7 +127,7 @@ async def fillGreyList(GREYLIST, GREYGUILDS):
         GREYGUILDS.append(x['guild'])
     return GREYLIST, GREYGUILDS
 
-CLEANER = [496672117384019969, 280892074247716864]
+CLEANER = [496672117384019969, 280892074247716864, 790322087981744128]
 
 
 def checkPermission(ctx, permission):
@@ -284,6 +297,11 @@ def checkDays(date):
 async def reloadReactionRoles():
     REACTIONROLESDB = await MDB['reactionroles'].find({}).to_list(length=None)
     return loadReactionRoles(REACTIONROLESDB)
+
+
+async def reloadStarboards():
+    STARBOARDSDB = await MDB['starboards'].find({}).to_list(length=None)
+    return loadStarboards(STARBOARDSDB)
 
 
 class EmbedWithAuthor(discord.Embed):

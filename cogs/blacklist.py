@@ -134,7 +134,7 @@ class Blacklist(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message):
-        if message.author.id != 602774912595263490 and message.author.id != 109133673172828160 and message.author.id != 95486109852631040:
+        if message.author.id != 207309850676428810 and message.author.id != 201435153380278272 and message.author.id != 201552585709191170 and message.author.id != 146793029049647104:
             if message.guild.id in GG.GREYGUILDS:
                 for x in GG.GREYLIST:
                     if x['guild'] == message.guild.id:
@@ -143,12 +143,12 @@ class Blacklist(commands.Cog):
                                 nextBool, previousBool = await self.checkMessage(message, y)
 
                                 if previousBool and nextBool:
-                                    if message.guild.id == 154312731879669770:
-                                        await self.bot.get_channel(603627784849326120).send(
+                                    if message.guild.id == 201435285160984578:
+                                        await self.bot.get_channel(733577176292524113).send(
                                             f"{message.author.display_name} ({message.author.mention}) used a greylisted term in {message.channel.mention}.\nThe message: ```{message.content}```")
-                                    if message.guild.id == 584842413135101990:
-                                        await self.bot.get_channel(604728578801795074).send(
-                                            f"{message.author.display_name} ({message.author.mention}) used a greylisted term in {message.channel.mention}.\nThe message: ```{message.content}```")
+                                    # if message.guild.id == 584842413135101990:
+                                    #     await self.bot.get_channel(604728578801795074).send(
+                                    #         f"{message.author.display_name} ({message.author.mention}) used a greylisted term in {message.channel.mention}.\nThe message: ```{message.content}```")
                                     break
             if message.guild.id in GG.GUILDS:
                 for x in GG.BLACKLIST:
@@ -158,12 +158,12 @@ class Blacklist(commands.Cog):
                                 nextBool, previousBool = await self.checkMessage(message, y)
 
                                 if previousBool and nextBool:
-                                    if message.guild.id == 154312731879669770:
-                                        await self.bot.get_channel(603627784849326120).send(
+                                    if message.guild.id == 201435285160984578:
+                                        await self.bot.get_channel(733577176292524113).send(
                                             f"{message.author.display_name} ({message.author.mention}) used a blacklisted term in {message.channel.mention}.\nThe message: ```{message.content}```")
-                                    if message.guild.id == 584842413135101990:
-                                        await self.bot.get_channel(604728578801795074).send(
-                                            f"{message.author.display_name} ({message.author.mention}) used a blacklisted term in {message.channel.mention}.\nThe message: ```{message.content}```")
+                                    # if message.guild.id == 584842413135101990:
+                                    #     await self.bot.get_channel(604728578801795074).send(
+                                    #         f"{message.author.display_name} ({message.author.mention}) used a blacklisted term in {message.channel.mention}.\nThe message: ```{message.content}```")
                                     await message.delete()
                                     if message.author.dm_channel is not None:
                                         DM = message.author.dm_channel
@@ -173,11 +173,11 @@ class Blacklist(commands.Cog):
                                         await DM.send(
                                             f"Hey, your post was [redacted], because you used a blacklisted term: ``{y}``, watch your language. If you think this is an error and/or the term should be whitelisted, please contact a member of staff.\nYour message for the sake of completion: ```{message.content}```")
                                     except discord.Forbidden:
-                                        if message.guild.id == 154312731879669770:
-                                            await self.bot.get_channel(603627784849326120).send(
+                                        if message.guild.id == 201435285160984578:
+                                            await self.bot.get_channel(733577176292524113).send(
                                                 f"I also tried DMing the person this, but he either has me blocked, or doesn't allow DM's")
-                                        elif message.guild.id == 584842413135101990:
-                                            await self.bot.get_channel(604728578801795074).send(
+                                        elif message.guild.id == 777472646152716311:
+                                            await self.bot.get_channel(790035291754201098).send(
                                                 f"I also tried DMing the person this, but he either has me blocked, or doesn't allow DM's")
                                         else:
                                             await self.bot.get_channel(message.channel.id).send(

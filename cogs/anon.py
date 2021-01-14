@@ -1,8 +1,9 @@
-import discord
-
 from io import BytesIO
+
+import discord
 from discord import File as reportFile
 from discord.ext import commands
+
 from utils import globals as GG
 from utils import logger
 
@@ -15,9 +16,9 @@ class Anon(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message):
-        # report_channel = 574758154110238730
-        # delivery_channel = self.bot.get_channel(574886423711186964)
-        LordDusk = self.bot.get_user(GG.OWNER)
+        # report_channel = 792179690495279114
+        # delivery_channel = self.bot.get_channel(792183020803194910)
+        sock = self.bot.get_user(GG.OWNER)
         channel = message.channel
 
         if message.author.id != GG.BOT:
@@ -26,7 +27,8 @@ class Anon(commands.Cog):
                 TYPE = GG.CHANNEL[channel.id]
 
                 if TYPE == "ANON":
-                    delivery_channel = await GG.MDB['channelinfo'].find_one({"guild": message.guild.id, "type": "DELIVERY"})
+                    delivery_channel = await GG.MDB['channelinfo'].find_one(
+                        {"guild": message.guild.id, "type": "DELIVERY"})
                     if delivery_channel is None:
                         await self.noDeliveryChannel(message)
                         await self.notifyOwner(message)
@@ -79,7 +81,7 @@ class Anon(commands.Cog):
                                         f"Ths user left the server. So I can't do anything about this")
                             else:
                                 await message.channel.send(
-                                    f"[DEBUG] Sorry, reporter not found. I'll DM my owner {LordDusk.mention} for you.")
+                                    f"[DEBUG] Sorry, reporter not found. I'll DM my owner {sock.mention} for you.")
                     except ValueError as e:
                         return
 
@@ -94,13 +96,13 @@ class Anon(commands.Cog):
                               author=author.display_name,
                               description=f"Hello, a user of your server {message.guild.name} tried to make an "
                                           f"anonymous report, but you have yet to make a delivery channel. You can do this by "
-                                          f"executing the following command: ``!addchannel <id> DELIVERY``. Thank you!")
+                                          f"executing the following command: ``=addchannel <id> DELIVERY``. Thank you!")
         try:
             await dm_channel.send(embed=Embed)
         except discord.errors.Forbidden:
             await message.channel.send(
                 f"Hello {message.guild.owner.mention}, a user just tried to make an anonymous report, but you have "
-                f"yet to make a delivery channel. You can do this by executing the following command: ``!addchannel "
+                f"yet to make a delivery channel. You can do this by executing the following command: ``=addchannel "
                 f"<id> DELIVERY``. Thank you!")
 
     async def noDeliveryChannel(self, message):

@@ -9,7 +9,7 @@ def is_staff_trouble():
         if isinstance(ctx.author, discord.Member):
             if ctx.author.roles is not None:
                 for r in ctx.author.roles:
-                    if r.id in GG.STAFF or r.id == 593720945324326914:
+                    if r.id in GG.STAFF or r.id == 201509206841491456:
                         allowed = True
                         break
                     else:

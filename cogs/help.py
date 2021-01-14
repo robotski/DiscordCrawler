@@ -125,7 +125,7 @@ class Help(commands.Cog):
         embed = GG.EmbedWithAuthor(ctx)
         embed.title = "All information commands."
         embed.add_field(name="botinfo",
-                        value=f"``{self.bot.get_server_prefix(ctx.message)}[botinfo|stats|info]``\nShows information about <@602774912595263490>", inline=False)
+                        value=f"``{self.bot.get_server_prefix(ctx.message)}[botinfo|stats|info]``\nShows information about <@777459831341842443>", inline=False)
         embed.add_field(name="invite",
                         value=f"``{self.bot.get_server_prefix(ctx.message)}invite``\nShows you the invite link and the information about the permissions the bot need.",
                         inline=False)
@@ -286,7 +286,7 @@ class Help(commands.Cog):
                         value=f"``{self.bot.get_server_prefix(ctx.message)}nudge <msgId>``\nMoves a message to the proper channel, with a little warning.",
                         inline=False)
         embed.add_field(name="prefix",
-                        value=f"``{self.bot.get_server_prefix(ctx.message)}prefix [prefix]``\nSets the bot's prefix for this server.\nForgot the prefix? Reset it with '@DiscordCrawler#6716 prefix !'.",
+                        value=f"``{self.bot.get_server_prefix(ctx.message)}prefix [prefix]``\nSets the bot's prefix for this server.\nForgot the prefix? Reset it with '@DiscordCrawler#6716 prefix ='.",
                         inline=False)
         embed.add_field(name="purge",
                         value=f"``{self.bot.get_server_prefix(ctx.message)}purge <amount>``\nPurges an x amount of messages, with a little warning.",

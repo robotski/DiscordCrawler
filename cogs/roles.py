@@ -61,7 +61,7 @@ class Roles(commands.Cog):
     @GG.is_staff()
     async def removeAll(self, ctx, roleId):
         guild = await self.bot.fetch_guild(ctx.guild.id)
-        Role = guild.get_role(roleId)
+        Role = guild.get_role(int(roleId))
         if Role is not None:
             members = guild.members
             await ctx.send(f"Removing {Role.name} from {len(members)} members.")

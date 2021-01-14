@@ -1,16 +1,12 @@
 import datetime
-import io
-import json
-
-import discord
 import time
 
+import discord
 from discord import VerificationLevel as VL
 from discord import VoiceRegion as VR
-from math import floor
+from discord.ext import commands
 
 import utils.globals as GG
-from discord.ext import commands
 from utils import logger
 
 log = logger.logger
@@ -80,7 +76,7 @@ class Info(commands.Cog):
     async def botinfo(self, ctx):
         """Shows info about bot"""
         em = discord.Embed(color=discord.Color.green(),
-                           description="DiscordCrawler, a bot for moderation and other helpful things.")
+                           description="~~DiscordCrawler~~ **SockBot**, a bot for moderation and other helpful things.")
         em.title = 'Bot Info'
         em.set_author(name=ctx.author.name, icon_url=ctx.author.avatar_url)
         em.add_field(name="Servers", value=str(len(ctx.bot.guilds)))
@@ -98,22 +94,22 @@ class Info(commands.Cog):
         em.add_field(name='Text Channels', value=f"{totalText}")
         em.add_field(name='Voice Channels', value=f"{totalVoice}")
         em.add_field(name="Invite",
-                     value="[Click Here](https://discordapp.com/oauth2/authorize?client_id=602774912595263490&scope=bot&permissions=805412928)")
-        em.add_field(name='Source', value="[Click Here](https://github.com/CrawlerEmporium/DiscordCrawler)")
+                     value="[Click Here](https://discordapp.com/oauth2/authorize?client_id=711472620994035743&scope=bot&permissions=805412928)")
+        em.add_field(name='Source', value="[Click Here](https://github.com/robotski/DiscordCrawler)")
         em.add_field(name='Issue Tracker',
-                     value="[Click Here](https://github.com/CrawlerEmporium/DiscordCrawler/issues)")
+                     value="[Click Here](https://github.com/robotski/DiscordCrawler/issues)")
         em.add_field(name="About",
-                     value='A multipurpose bot made by LordDusk#0001 .\n[Support Server](https://discord.gg/HEY6BWj)')
-        em.set_footer(text=f"DiscordCrawler {ctx.bot.version} | Powered by discord.py")
+                     value='A multipurpose bot made by LordDusk#0001. Modified by Sock#2082.\n[Support Server](https://discord.gg/EMatTgMdna)')
+        em.set_footer(text=f"SockBot {ctx.bot.version} | Powered by discord.py")
         await ctx.send(embed=em)
 
     @commands.command()
     async def support(self, ctx):
         em = GG.EmbedWithAuthor(ctx)
         em.title = 'Support Server'
-        em.description = "So you want support for DiscordCrawler? You can easily join my discord [here](https://discord.gg/HEY6BWj).\n" \
+        em.description = "So you want support for SockBot? You can easily join my discord [here](https://discord.gg/EMatTgMdna).\n" \
                          "This server allows you to ask questions about the bot. Do feature requests, and talk with other bot users!\n\n" \
-                         "If you want to somehow support my developer, you can buy me a cup of coffee (or 2) [here](https://ko-fi.com/5ecrawler)"
+                         "One more thing... You're pretty cool!"
         await ctx.send(embed=em)
 
     @commands.command()
@@ -121,8 +117,8 @@ class Info(commands.Cog):
         em = GG.EmbedWithAuthor(ctx)
         em.title = 'Invite Me!'
         em.description = "Hi, you can easily invite me to your own server by following [this link](" \
-                         "https://discordapp.com/oauth2/authorize?client_id=602774912595263490&scope=bot&permissions" \
-                         "=805412928)!\n\nOf the 5 permissions asked, 4 are optional and 1 mandatory for optimal " \
+                         "https://discordapp.com/oauth2/authorize?client_id=711472620994035743&scope=bot&permissions" \
+                         "=805412928)!\n\nOf the 6 permissions asked, 5 are optional and 1 mandatory for optimal " \
                          "usage of the capabilities of the bot.\n\n**Mandatory:**\n__Manage Messages__ - this allows the " \
                          "bot to remove messages from other users.\n\n**Optional:**\n__Manage Webhooks__ - There are 2 " \
                          "ways for the quote command to function. One where it will use a webhook to give a reply as " \

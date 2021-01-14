@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import asyncio
 import discord
 import utils.globals as GG
@@ -57,7 +58,7 @@ bot = Crawler(prefix=get_prefix, intents=intents, case_insensitive=True, status=
 
 @bot.event
 async def on_message(msg):
-    if msg.author.id == 645958319982510110 or not msg.author.bot:
+    if not msg.author.bot:
         await bot.invoke(await bot.get_context(msg))
 
 
@@ -102,6 +103,9 @@ async def fillGlobals():
 
     REACTIONROLESDB = await GG.MDB['reactionroles'].find({}).to_list(length=None)
     GG.REACTIONROLES = GG.loadReactionRoles(REACTIONROLESDB)
+
+    STARBOARDDB = await GG.MDB['starboards'].find({}).to_list(length=None)
+    GG.STARBOARDS = GG.loadStarboards(STARBOARDDB)
 
     GG.BLACKLIST, GG.GUILDS = await GG.fillBlackList(GG.BLACKLIST, GG.GUILDS)
     GG.GREYLIST, GG.GREYGUILDS = await GG.fillGreyList(GG.GREYLIST, GG.GREYGUILDS)
