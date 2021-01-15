@@ -1,5 +1,6 @@
 import json
 import random
+from typing import Dict
 
 import discord
 import motor.motor_asyncio
@@ -8,6 +9,8 @@ from discord import VerificationLevel as VL
 from discord import VoiceRegion as VR
 from discord.ext import commands
 from environs import Env
+
+from models.starboard_entry import StarboardEntry
 
 env = Env()
 env.read_env()
@@ -33,7 +36,7 @@ STAFF = []
 TERMS = []
 GREYS = []
 REACTIONROLES = []
-STARBOARDS = []
+STARBOARDS: Dict[int, Dict[str, StarboardEntry]] = {}
 
 BLACKLIST = ""
 GREYLIST = ""
@@ -65,15 +68,17 @@ def loadReactionRoles(REACTIONROLESDB):
     return reactionRole
 
 
-def loadStarboards(STARBOARDSDB):
-    starboard = {}
-    for i in STARBOARDSDB:
-        # key = int(i['emoji'])
-        key = str(i['guild']) + i['emoji']
-        if key not in starboard:
-            starboard[key] = []
-        starboard[key].append((i['channel']))
-    return starboard
+def loadStarboards(STARBOARDSDB) -> Dict[int, Dict[str, StarboardEntry]]:
+    starboards = {}
+    for all_data in STARBOARDSDB:
+        key = int(all_data['guild'])
+        if key not in starboards:
+            starboards[key] = {}
+        for name, data in all_data['starboards'].items():
+            starboard = StarboardEntry.from_json(data)
+            starboards[key][name] = starboard
+        # starboard[key].append(all_data['starboards'])
+    return starboards
 
 
 async def fillBlackList(BLACKLIST, GUILDS):
