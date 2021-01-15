@@ -118,26 +118,41 @@ class Starboard(commands.Cog):
             em = message.embeds[0]
             if message.system_content:
                 if em.description != discord.Embed.Empty:
-                    em.description = "{}\n\n{}".format(message.system_content, em.description)[:2048]
+                    em.description = "{}\n{}".format(message.system_content, em.description)[:2048]
                 else:
                     em.description = message.system_content
                 if not author.bot:
-                    em.set_author(name=author.display_name, url=message.jump_url, icon_url=str(author.avatar_url))
+                    em.set_author(
+                        name=author.display_name,
+                        url=message.jump_url,
+                        icon_url=str(author.avatar_url),
+                    )
         else:
-            em = discord.Embed(timestamp=message.created_at)
-            em.color = author.color
+            em = discord.Embed(timestamp=message.created_at, color=author.color)
+            # if starboard.colour in ["user", "member", "author"]:
+            #     em.color = author.colour
+            # elif starboard.colour == "bot":
+            #     em.color = await self._get_colour(channel)
+            # else:
+            #     em.color = discord.Colour(starboard.colour)
             em.description = message.system_content
-            em.set_author(name=author.display_name, url=message.jump_url, icon_url=str(author.avatar_url))
+            em.set_author(
+                name=author.display_name, url=message.jump_url, icon_url=str(author.avatar_url)
+            )
             if message.attachments != []:
                 em.set_image(url=message.attachments[0].url)
         em.timestamp = message.created_at
-        jump_link = "\n\n[Click Here to view context]({link})".format(link=message.jump_url)
-        if em.description:
-            em.description = f"{em.description}{jump_link}"
-        else:
-            em.description = jump_link
-        em.set_footer(text=f"{channel.guild.name} | {channel.name}")
+        em.add_field(name='Source', value="[Link]({link})".format(link=message.jump_url))
+        # jump_link = "\n**Source**\n[Link]({link})".format(link=message.jump_url)
+        # if em.description:
+        #     em.description = f"{em.description}{jump_link}"
+        # else:
+        #     em.description = jump_link
+        em.set_footer(text=f"{message.id}")
         return em
+
+    async def _save_starboards(self, guild: discord.Guild) -> None:
+        await GG.MDB['starboards'].replace_one({'guild': guild.id}, {'guild': guild.id,'starboards': {n: s.to_json() for n, s in GG.STARBOARDS[guild.id].items()}}, upsert=True)
 
     async def _get_count(self, message_entry: StarboardMessage, starboard: StarboardEntry, remove: Optional[int]) -> StarboardMessage:
         orig_channel = self.bot.get_channel(message_entry.original_channel)
@@ -161,7 +176,9 @@ class Starboard(commands.Cog):
         for reaction in reactions:
             log.debug(reactions)
             async for user in reaction.users():
-                if user.id == orig_msg.author.id:
+                if not await self._check_roles(starboard, user):
+                    continue
+                if not starboard.selfstar and user.id == orig_msg.author.id:
                     continue
                 if user.id not in message_entry.reactions and not user.bot:
                     log.debug("Adding user")
@@ -173,13 +190,50 @@ class Starboard(commands.Cog):
         log.debug(message_entry.reactions)
         return message_entry
 
+    @commands.Cog.listener()
+    async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent) -> None:
+        await self._update_stars(payload)
+
+
+    @commands.Cog.listener()
+    async def on_raw_reaction_remove(self, payload: discord.RawReactionActionEvent) -> None:
+        await self._update_stars(payload, remove=payload.user_id)
+
+
+    @commands.Cog.listener()
+    async def on_raw_reaction_clear(self, payload: discord.RawReactionActionEvent) -> None:
+        channel = self.bot.get_channel(id=payload.channel_id)
+        try:
+            guild = channel.guild
+        except AttributeError:
+            # DMChannels don't have guilds
+            return
+        try:
+            msg = await channel.fetch_message(id=payload.message_id)
+        except (discord.errors.NotFound, discord.Forbidden):
+            return
+        if guild.id not in GG.STARBOARDS:
+            return
+        # starboards = await self.config.guild(guild).starboards()
+        for name, starboard in GG.STARBOARDS[guild.id].items():
+            # starboard = StarboardEntry.from_json(s_board)
+            star_channel = self.bot.get_channel(starboard.channel)
+            if not star_channel:
+                continue
+            async with starboard.lock:
+                await self._loop_messages(payload, starboard, star_channel, msg, None)
+
+
 
     async def _loop_messages(self, payload: Union[discord.RawReactionActionEvent, FakePayload], starboard: StarboardEntry, star_channel: discord.TextChannel, message: discord.Message, remove: Optional[int]) -> bool:
+        async def arange(list):
+            for i in list:
+                yield i
         try:
             guild = star_channel.guild
         except AttributeError:
             return True
-        for messages in starboard.messages:
+        async for messages in arange(starboard.messages):
             same_message = messages.original_message == message.id
             same_channel = messages.original_channel == payload.channel_id
             starboard_message = messages.new_message == message.id
@@ -198,8 +252,9 @@ class Starboard(commands.Cog):
                 try:
                     message_edit = await star_channel.fetch_message(messages.new_message)
                 except (discord.errors.NotFound, discord.errors.Forbidden):
+                    # starboard message may have been deleted
                     return True
-                if count < 2:
+                if count < starboard.threshold:
                     messages.new_message = None
                     messages.new_channel = None
                     await self._save_starboards(guild)
@@ -209,8 +264,7 @@ class Starboard(commands.Cog):
                 count_message = f"{starboard.emoji} **#{count}**"
                 await message_edit.edit(content=count_message)
                 return True
-            return False
-
+        return False
 
     @commands.command()
     @commands.guild_only()
@@ -265,38 +319,7 @@ class Starboard(commands.Cog):
         await ctx.send("Deleted starboard {name}".format(name=starboard.name))
 
 
-    @commands.Cog.listener()
-    async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent) -> None:
-        await self._update_stars(payload)
 
-
-    @commands.Cog.listener()
-    async def on_raw_reaction_remove(self, payload: discord.RawReactionActionEvent) -> None:
-        await self._update_stars(payload, remove=payload.user_id)
-
-
-    @commands.Cog.listener()
-    async def on_raw_reaction_clear(self, payload: discord.RawReactionActionEvent) -> None:
-        channel = self.bot.get_channel(id=payload.channel_id)
-        try:
-            guild = channel.guild
-        except AttributeError:
-            return
-        try:
-            msg = await channel.fetch_message(id=payload.message_id)
-        except (discord.errors.NotFound, discord.Forbidden):
-            return
-        if guild.id not in GG.STARBOARDS:
-            return
-        for name, starboard in GG.STARBOARDS[guild.id].items():
-            star_channel = self.bot.get_channel(starboard.channel)
-            if not star_channel:
-                continue
-            async with starboard.lock:
-                await self._loop_messages(payload, starboard, star_channel, msg, None)
-
-    async def _save_starboards(self, guild: discord.Guild) -> None:
-        await GG.MDB['starboards'].replace_one({'guild': guild.id}, {'guild': guild.id,'starboards': {n: s.to_json() for n, s in GG.STARBOARDS[guild.id].items()}}, upsert=True)
 
     async def _update_stars(self, payload: Union[discord.RawReactionActionEvent, FakePayload], remove: Optional[int] = None) -> None:
         channel = self.bot.get_channel(id=payload.channel_id)
@@ -333,7 +356,7 @@ class Starboard(commands.Cog):
             star_message = StarboardMessage(original_message=msg.id, original_channel=channel.id, new_message=None, new_channel=None, author=msg.author.id, reactions=[payload.user_id])
             await self._get_count(star_message, starboard, remove)
             count = len(star_message.reactions)
-            if count < 2:
+            if count < starboard.threshold:
                 if star_message not in starboard.messages:
                     GG.STARBOARDS[guild.id][starboard.name].messages.append(star_message)
                 await self._save_starboards(guild)
