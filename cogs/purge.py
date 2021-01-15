@@ -1,12 +1,13 @@
 import asyncio
-import discord
-import utils.globals as GG
-from disputils import BotConfirmation
 
 from discord.ext import commands
+from disputils import BotConfirmation
+
+import utils.globals as GG
 from utils import logger
 
 log = logger.logger
+
 
 class Purge(commands.Cog):
     def __init__(self, bot):
@@ -24,7 +25,8 @@ class Purge(commands.Cog):
                     confirmation = BotConfirmation(ctx, 0x012345)
                     await confirmation.confirm(f"Are you sure you want to remove {limit} messages?")
                     if confirmation.confirmed:
-                        await confirmation.update(f"Confirmed, **:put_litter_in_its_place:** deleting {limit} messages...", color=0x55ff55)
+                        await confirmation.update(
+                            f"Confirmed, **:put_litter_in_its_place:** deleting {limit} messages...", color=0x55ff55)
                         try:
                             limit = int(limit)
                         except IndexError:
@@ -47,7 +49,9 @@ class Purge(commands.Cog):
                 await asyncio.sleep(4)
                 await msg.delete()
         else:
-            await ctx.send("I don't have the Manage_Messages permission. It's a mandatory permission, I have noted my owner about this. Please give me this permission, I will end up leaving the server if it happens again.")
+            await ctx.send(
+                "I don't have the Manage_Messages permission. It's a mandatory permission, I have noted my owner about this. Please give me this permission, I will end up leaving the server if it happens again.")
+
 
 def setup(bot):
     log.info("[Cog] Purge")

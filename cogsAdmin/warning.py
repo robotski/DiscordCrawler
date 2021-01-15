@@ -2,10 +2,9 @@ import typing
 from datetime import datetime
 
 import discord
-import utils.globals as GG
-
 from discord.ext import commands
 
+import utils.globals as GG
 from cogsAdmin.models.case import Case, getCaseEmbed, getCaseTargetEmbed
 from cogsAdmin.models.caseStatus import CaseStatus
 from cogsAdmin.models.caseType import CaseType
@@ -13,6 +12,7 @@ from utils import logger
 from utils.functions import get_next_case_num
 
 log = logger.logger
+
 
 class Warning(commands.Cog):
     def __init__(self, bot):
@@ -51,7 +51,6 @@ class Warning(commands.Cog):
             await ctx.send(f"DM with info send to {member}")
         except discord.Forbidden:
             await ctx.send(f"Message failed to send. (Not allowed to DM)")
-
 
 
 def setup(bot):

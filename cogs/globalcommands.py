@@ -1,9 +1,9 @@
 import discord
-
-from disputils import BotEmbedPaginator
 from discord.ext import commands
-from utils import logger
+from disputils import BotEmbedPaginator
+
 import utils.globals as GG
+from utils import logger
 
 log = logger.logger
 
@@ -27,7 +27,8 @@ def global_embed(self, db_response, author, message, command, server=None, whisp
     if not whisper:
         embed.set_footer(text=f'You too can use this command. {self.bot.get_server_prefix(message)}g {command}')
     else:
-        embed.set_footer(text=f'This command was triggered in {server}. You can trigger it there by running {self.bot.get_server_prefix(message)}g {command}')
+        embed.set_footer(
+            text=f'This command was triggered in {server}. You can trigger it there by running {self.bot.get_server_prefix(message)}g {command}')
     return embed
 
 
@@ -67,7 +68,9 @@ class GlobalCommands(commands.Cog):
             if checkIfExist is not None:
                 return await ctx.send(content=":x:" + ' **This server already has a command with that trigger.**')
             else:
-                await GG.MDB['globalcommands'].insert_one({"Guild": ctx.message.guild.id, "Trigger": trig, "Response": response, "Attachments": [attachment.url for attachment in ctx.message.attachments]})
+                await GG.MDB['globalcommands'].insert_one(
+                    {"Guild": ctx.message.guild.id, "Trigger": trig, "Response": response,
+                     "Attachments": [attachment.url for attachment in ctx.message.attachments]})
         await ctx.send(content=":white_check_mark:" + ' **Command added.**')
 
     @commands.command(aliases=['gremove', 'grem'], hidden=True)
@@ -75,7 +78,8 @@ class GlobalCommands(commands.Cog):
     @commands.guild_only()
     async def globalremove(self, ctx, *, trigger):
         """Removes a global command."""
-        result = await GG.MDB['globalcommands'].delete_one({"Guild": ctx.message.guild.id, "Trigger": trigger.replace('\'', '\'\'')})
+        result = await GG.MDB['globalcommands'].delete_one(
+            {"Guild": ctx.message.guild.id, "Trigger": trigger.replace('\'', '\'\'')})
         if result.deleted_count > 0:
             await ctx.send(content=":white_check_mark:" + ' **Command deleted.**')
         else:
@@ -111,7 +115,8 @@ class GlobalCommands(commands.Cog):
             try:
                 await DM.send(content=":x:" + ' **Command with that trigger does not exist.**')
             except discord.Forbidden:
-                await ctx.send(f"{ctx.author.mention} I tried DMing you, but you either blocked me, or you don't allow DM's")
+                await ctx.send(
+                    f"{ctx.author.mention} I tried DMing you, but you either blocked me, or you don't allow DM's")
         else:
             if ctx.guild and ctx.guild.me.permissions_in(
                     ctx.channel).manage_messages:
@@ -119,7 +124,8 @@ class GlobalCommands(commands.Cog):
             try:
                 await DM.send(embed=global_embed(self, user_quote, ctx.author, ctx.message, trig, ctx.guild.name, True))
             except discord.Forbidden:
-                await ctx.send(f"{ctx.author.mention} I tried DMing you, but you either blocked me, or you don't allow DM's")
+                await ctx.send(
+                    f"{ctx.author.mention} I tried DMing you, but you either blocked me, or you don't allow DM's")
 
     @commands.command(aliases=['glist'])
     @commands.guild_only()
@@ -146,7 +152,6 @@ class GlobalCommands(commands.Cog):
                 await ctx.message.delete()
 
             await ctx.send(f"```{user_quote['Response']}```", files=user_quote['Attachments'])
-
 
 
 def setup(bot):

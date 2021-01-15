@@ -1,12 +1,15 @@
 import json
+
 import discord
 from discord.ext import commands
-from utils import logger
+
 from utils import globals as GG
+from utils import logger
 
 log = logger.logger
 
 CHECKS = [' ', ',', '.', '!', '?', None, '"', '\'', '(', ')', '{', '}', '[', ']', '_', '-', ':', '|', '*', '~']
+
 
 class Blacklist(commands.Cog):
     def __init__(self, bot):
@@ -110,7 +113,8 @@ class Blacklist(commands.Cog):
             em.add_field(name="Blacklisted words", value=string)
             await DM.send(embed=em)
         except discord.Forbidden:
-            await ctx.send(f"{ctx.author.mention} I tried DMing you, but you either blocked me, or you don't allow DM's")
+            await ctx.send(
+                f"{ctx.author.mention} I tried DMing you, but you either blocked me, or you don't allow DM's")
         await ctx.message.delete()
 
     @commands.command(aliases=['graylisted'])

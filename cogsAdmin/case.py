@@ -1,9 +1,9 @@
-import discord
 import typing
 
-import utils.globals as GG
+import discord
 from discord.ext import commands
 
+import utils.globals as GG
 from cogsAdmin.models.caseStatus import CaseStatus
 from cogsAdmin.models.caseType import CaseType
 from utils import logger
@@ -57,7 +57,8 @@ class Case(commands.Cog):
         if case is not None:
             msg = case['message']
             msg += f"\nCLOSED - {message}"
-            await GG.MDB.cases.update_one({"caseId": caseId}, {"$set": {"status": CaseStatus.CLOSED, "message": msg}}, upsert=False)
+            await GG.MDB.cases.update_one({"caseId": caseId}, {"$set": {"status": CaseStatus.CLOSED, "message": msg}},
+                                          upsert=False)
             await ctx.send(f"Case ``{caseId}`` was closed.")
         else:
             await ctx.send(f"There is no case with id: ``{caseId}``")

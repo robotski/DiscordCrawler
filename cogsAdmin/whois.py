@@ -1,9 +1,9 @@
-import discord
 import typing
 
-import utils.globals as GG
+import discord
 from discord.ext import commands
 
+import utils.globals as GG
 from cogsAdmin.models.caseType import CaseType
 from utils import logger
 

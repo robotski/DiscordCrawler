@@ -2,10 +2,9 @@ import typing
 from datetime import datetime
 
 import discord
-import utils.globals as GG
-
 from discord.ext import commands
 
+import utils.globals as GG
 from cogsAdmin.models.case import Case, getCaseEmbed
 from cogsAdmin.models.caseStatus import CaseStatus
 from cogsAdmin.models.caseType import CaseType
@@ -13,6 +12,7 @@ from utils import logger
 from utils.functions import get_next_case_num
 
 log = logger.logger
+
 
 class Note(commands.Cog):
     def __init__(self, bot):
@@ -39,6 +39,7 @@ class Note(commands.Cog):
         await GG.MDB.members.update_one({"server": ctx.guild.id, "user": member.id}, {"$set": memberDB}, upsert=True)
         embed = await getCaseEmbed(ctx, case)
         await ctx.send(embed=embed)
+
 
 def setup(bot):
     log.info("[Admin] Note")

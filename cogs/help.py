@@ -1,7 +1,8 @@
 import asyncio
-import typing
+
 import discord
 from discord.ext import commands
+
 from utils import globals as GG
 from utils import logger
 
@@ -125,32 +126,37 @@ class Help(commands.Cog):
         embed = GG.EmbedWithAuthor(ctx)
         embed.title = "All information commands."
         embed.add_field(name="botinfo",
-                        value=f"``{self.bot.get_server_prefix(ctx.message)}[botinfo|stats|info]``\nShows information about <@777459831341842443>", inline=False)
+                        value=f"``{self.bot.get_server_prefix(ctx.message)}[botinfo|stats|info]``\nShows information about <@777459831341842443>",
+                        inline=False)
         embed.add_field(name="invite",
                         value=f"``{self.bot.get_server_prefix(ctx.message)}invite``\nShows you the invite link and the information about the permissions the bot need.",
                         inline=False)
         embed.add_field(name="serverinfo",
-                        value=f"``{self.bot.get_server_prefix(ctx.message)}serverinfo``\nShows info about server this command is executed on.", inline=False)
+                        value=f"``{self.bot.get_server_prefix(ctx.message)}serverinfo``\nShows info about server this command is executed on.",
+                        inline=False)
         embed.add_field(name="support",
-                        value=f"``{self.bot.get_server_prefix(ctx.message)}support``\nShows info about the support server and how to join it.", inline=False)
+                        value=f"``{self.bot.get_server_prefix(ctx.message)}support``\nShows info about the support server and how to join it.",
+                        inline=False)
         embed.add_field(name="oldhelp",
-                        value=f"``{self.bot.get_server_prefix(ctx.message)}oldhelp``\nShows you the old help command (the one in a giant embed).", inline=False)
+                        value=f"``{self.bot.get_server_prefix(ctx.message)}oldhelp``\nShows you the old help command (the one in a giant embed).",
+                        inline=False)
         embed.set_footer(
             text='These reactions are available for 60 seconds, afterwards it will stop responding.\n📔 Returns to '
                  'the main menu.\n❌ Deletes this message from chat.')
         return embed
 
-
     def personalCommand(self, ctx):
         embed = GG.EmbedWithAuthor(ctx)
         embed.title = "Your own personal quotes in the bot."
-        embed.add_field(name='personal', value=f'``{self.bot.get_server_prefix(ctx.message)}[personal|p] <trigger>``\nReturns your chosen personal quote.',
+        embed.add_field(name='personal',
+                        value=f'``{self.bot.get_server_prefix(ctx.message)}[personal|p] <trigger>``\nReturns your chosen personal quote.',
                         inline=False)
         embed.add_field(name='personaladd',
                         value=f'``{self.bot.get_server_prefix(ctx.message)}[personaladd|padd] <trigger> [response]``\nAdds a personal quote.',
                         inline=False)
         embed.add_field(name='personalremove',
-                        value=f'``{self.bot.get_server_prefix(ctx.message)}[personalremove|premove|prem] <trigger>``\nRemoves a personal quote.', inline=False)
+                        value=f'``{self.bot.get_server_prefix(ctx.message)}[personalremove|premove|prem] <trigger>``\nRemoves a personal quote.',
+                        inline=False)
         embed.add_field(name='personallist',
                         value=f'``{self.bot.get_server_prefix(ctx.message)}[personallist|plist] [page_number=1]``\nReturns all your personal quotes.',
                         inline=False)
@@ -179,7 +185,6 @@ class Help(commands.Cog):
         else:
             await ctx.invoke(self.bot.get_command("oldhelp"))
 
-
     async def waitStaffChangeMessage(self, ctx, message):
         def check(reaction, user):
             return (user == ctx.message.author and str(reaction.emoji) == '📊') or \
@@ -187,7 +192,7 @@ class Help(commands.Cog):
                    (user == ctx.message.author and str(reaction.emoji) == '📝') or \
                    (user == ctx.message.author and str(reaction.emoji) == '📔') or \
                    (user == ctx.message.author and str(reaction.emoji) == '❌')
-                    # (user == ctx.message.author and str(reaction.emoji) == '🔇') or \
+            # (user == ctx.message.author and str(reaction.emoji) == '🔇') or \
 
         try:
             reaction, user = await ctx.bot.wait_for('reaction_add', timeout=60.0, check=check)
@@ -236,7 +241,8 @@ class Help(commands.Cog):
                         value=f"``{self.bot.get_server_prefix(ctx.message)}poll <text>``\nAdds 👍, 👎, 🤷‍ to your text, for questions that don't need specific answers.",
                         inline=False)
         embed.add_field(name="poll option 2",
-                        value="``"+self.bot.get_server_prefix(ctx.message)+"poll {title} [answer1] [answer2] ... [answer20]``\nThis command can be used to create a poll with a specific title and specific answers. Note that this command supports up to 20 answers. and the {} around the title and [] around the answers are **required**",
+                        value="``" + self.bot.get_server_prefix(
+                            ctx.message) + "poll {title} [answer1] [answer2] ... [answer20]``\nThis command can be used to create a poll with a specific title and specific answers. Note that this command supports up to 20 answers. and the {} around the title and [] around the answers are **required**",
                         inline=False)
         embed.set_footer(
             text='These reactions are available for 60 seconds, afterwards it will stop responding.\n📔 Returns to '
@@ -246,13 +252,15 @@ class Help(commands.Cog):
     def serverQuoteCommand(self, ctx):
         embed = GG.EmbedWithAuthor(ctx)
         embed.title = "Your server quotes in the bot."
-        embed.add_field(name='global', value=f'``{self.bot.get_server_prefix(ctx.message)}[globalcommand|g] <trigger>``\nReturns your chosen server quote.',
+        embed.add_field(name='global',
+                        value=f'``{self.bot.get_server_prefix(ctx.message)}[globalcommand|g] <trigger>``\nReturns your chosen server quote.',
                         inline=False)
         embed.add_field(name='globaladd',
                         value=f'``{self.bot.get_server_prefix(ctx.message)}[globaladd|gadd] <trigger> [response]``\nAdds a server quote.',
                         inline=False)
         embed.add_field(name='globalremove',
-                        value=f'``{self.bot.get_server_prefix(ctx.message)}[globalremove|gremove|grem] <trigger>``\nRemoves a server quote.', inline=False)
+                        value=f'``{self.bot.get_server_prefix(ctx.message)}[globalremove|gremove|grem] <trigger>``\nRemoves a server quote.',
+                        inline=False)
         embed.add_field(name='globallist',
                         value=f'``{self.bot.get_server_prefix(ctx.message)}[globallist|glist] [page_number=1]``\nReturns all server quotes.',
                         inline=False)

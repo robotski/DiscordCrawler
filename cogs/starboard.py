@@ -1,24 +1,16 @@
+from typing import Union, cast, Optional
+
+import discord
 from discord.ext import commands
+from discord.ext.commands.converter import Converter
+from discord.ext.commands.errors import BadArgument
 
 import utils.globals as GG
-from utils import logger
-import logging
-import asyncio
-from typing import Dict, Literal, Union, cast, Optional
-from datetime import datetime, timedelta
-
-import discord
-from discord.utils import snowflake_time
-import discord
-
-from typing import Dict, Union, cast, Optional
-
 from models.starboard_entry import StarboardEntry, StarboardMessage, FakePayload
+from utils import logger
 
 log = logger.logger
 
-from discord.ext.commands.converter import Converter
-from discord.ext.commands.errors import BadArgument
 
 class StarboardExists(Converter):
     async def convert(self, ctx: commands.Context, argument: str) -> StarboardEntry:
@@ -31,8 +23,6 @@ class StarboardExists(Converter):
         except KeyError:
             raise BadArgument("There is no starboard named {name}".format(name=argument))
         return starboard
-
-
 
 
 def getGuild(self, payload):
@@ -78,10 +68,9 @@ class Starboard(commands.Cog):
             else:
                 chans = ", ".join(r.name for r in roles)
             msg += "Allowed Roles: {chans}\n".format(chans=chans)
-        embed.add_field(name=_("Starboard {name}").format(name=starboard.name), value=msg)
+        embed.add_field(name="Starboard {name}".format(name=starboard.name), value=msg)
         text_msg += "{msg} Starboard {name}\n".format(msg=msg, name=starboard.name)
-        return (embed, text_msg)
-
+        return embed, text_msg
 
     async def _check_roles(self, starboard: StarboardEntry, member: Union[discord.Member, discord.User]) -> bool:
         if not isinstance(member, discord.Member):
@@ -111,8 +100,8 @@ class Starboard(commands.Cog):
                 return False
             return True
 
-    async def _build_embed(self, guild: discord.Guild, message: discord.Message, starboard: StarboardEntry) -> discord.Embed:
-        channel = cast(discord.TextChannel, message.channel)
+    async def _build_embed(self, message: discord.Message) -> discord.Embed:
+        cast(discord.TextChannel, message.channel)
         author = message.author
         if message.embeds:
             em = message.embeds[0]
@@ -139,7 +128,7 @@ class Starboard(commands.Cog):
             em.set_author(
                 name=author.display_name, url=message.jump_url, icon_url=str(author.avatar_url)
             )
-            if message.attachments != []:
+            if message.attachments:
                 em.set_image(url=message.attachments[0].url)
         em.timestamp = message.created_at
         em.add_field(name='Source', value="[Link]({link})".format(link=message.jump_url))
@@ -152,9 +141,13 @@ class Starboard(commands.Cog):
         return em
 
     async def _save_starboards(self, guild: discord.Guild) -> None:
-        await GG.MDB['starboards'].replace_one({'guild': guild.id}, {'guild': guild.id,'starboards': {n: s.to_json() for n, s in GG.STARBOARDS[guild.id].items()}}, upsert=True)
+        await GG.MDB['starboards'].replace_one({'guild': guild.id}, {'guild': guild.id,
+                                                                     'starboards': {n: s.to_json() for n, s in
+                                                                                    GG.STARBOARDS[guild.id].items()}},
+                                               upsert=True)
 
-    async def _get_count(self, message_entry: StarboardMessage, starboard: StarboardEntry, remove: Optional[int]) -> StarboardMessage:
+    async def _get_count(self, message_entry: StarboardMessage, starboard: StarboardEntry,
+                         remove: Optional[int]) -> StarboardMessage:
         orig_channel = self.bot.get_channel(message_entry.original_channel)
         new_channel = self.bot.get_channel(message_entry.new_channel)
         orig_reaction = []
@@ -194,11 +187,9 @@ class Starboard(commands.Cog):
     async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent) -> None:
         await self._update_stars(payload)
 
-
     @commands.Cog.listener()
     async def on_raw_reaction_remove(self, payload: discord.RawReactionActionEvent) -> None:
         await self._update_stars(payload, remove=payload.user_id)
-
 
     @commands.Cog.listener()
     async def on_raw_reaction_clear(self, payload: discord.RawReactionActionEvent) -> None:
@@ -223,12 +214,13 @@ class Starboard(commands.Cog):
             async with starboard.lock:
                 await self._loop_messages(payload, starboard, star_channel, msg, None)
 
-
-
-    async def _loop_messages(self, payload: Union[discord.RawReactionActionEvent, FakePayload], starboard: StarboardEntry, star_channel: discord.TextChannel, message: discord.Message, remove: Optional[int]) -> bool:
-        async def arange(list):
-            for i in list:
+    async def _loop_messages(self, payload: Union[discord.RawReactionActionEvent, FakePayload],
+                             starboard: StarboardEntry, star_channel: discord.TextChannel, message: discord.Message,
+                             remove: Optional[int]) -> bool:
+        async def arange(alist):
+            for i in alist:
                 yield i
+
         try:
             guild = star_channel.guild
         except AttributeError:
@@ -269,7 +261,8 @@ class Starboard(commands.Cog):
     @commands.command()
     @commands.guild_only()
     @GG.is_staff()
-    async def addStarboard(self, ctx: commands.Context, name: str, channel: discord.TextChannel = None, emoji: Union[discord.Emoji, str] = "⭐", ) -> None:
+    async def addStarboard(self, ctx: commands.Context, name: str, channel: discord.TextChannel = None,
+                           emoji: Union[discord.Emoji, str] = "⭐", ) -> None:
         guild = ctx.message.guild
         name = name.lower()
         if channel is None:
@@ -300,7 +293,6 @@ class Starboard(commands.Cog):
         msg = "Starboard set to {channel} with emoji {emoji}".format(channel=channel.mention, emoji=emoji)
         await ctx.send(msg)
 
-
     @commands.command()
     @commands.guild_only()
     @GG.is_staff()
@@ -311,17 +303,16 @@ class Starboard(commands.Cog):
                 await ctx.send("There are no starboards setup on this server!")
                 return
             if len(GG.STARBOARDS[guild.id]) > 1:
-                await ctx.send("There's more than one starboard setup in this server. " "Please provide a name for the starboard you wish to use.")
+                await ctx.send(
+                    "There's more than one starboard setup in this server. " "Please provide a name for the starboard you wish to use.")
                 return
             starboard = list(GG.STARBOARDS[guild.id].values())[0]
         del GG.STARBOARDS[ctx.guild.id][starboard.name]
         await self._save_starboards(ctx.guild)
         await ctx.send("Deleted starboard {name}".format(name=starboard.name))
 
-
-
-
-    async def _update_stars(self, payload: Union[discord.RawReactionActionEvent, FakePayload], remove: Optional[int] = None) -> None:
+    async def _update_stars(self, payload: Union[discord.RawReactionActionEvent, FakePayload],
+                            remove: Optional[int] = None) -> None:
         channel = self.bot.get_channel(id=payload.channel_id)
         try:
             guild = channel.guild
@@ -353,7 +344,8 @@ class Starboard(commands.Cog):
             if await self._loop_messages(payload, starboard, star_channel, msg, remove):
                 return
 
-            star_message = StarboardMessage(original_message=msg.id, original_channel=channel.id, new_message=None, new_channel=None, author=msg.author.id, reactions=[payload.user_id])
+            star_message = StarboardMessage(original_message=msg.id, original_channel=channel.id, new_message=None,
+                                            new_channel=None, author=msg.author.id, reactions=[payload.user_id])
             await self._get_count(star_message, starboard, remove)
             count = len(star_message.reactions)
             if count < starboard.threshold:
@@ -361,7 +353,7 @@ class Starboard(commands.Cog):
                     GG.STARBOARDS[guild.id][starboard.name].messages.append(star_message)
                 await self._save_starboards(guild)
                 return
-            em = await self._build_embed(guild, msg, starboard)
+            em = await self._build_embed(msg)
             count_msg = "{} **#{}**".format(payload.emoji, count)
             post_msg = await star_channel.send(count_msg, embed=em)
             if star_message not in starboard.messages:

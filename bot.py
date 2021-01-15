@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
-import asyncio
-import discord
-import utils.globals as GG
-
-from utils import logger
 from os import listdir
 from os.path import isfile, join
+
+import discord
 from discord.ext import commands
+
+import utils.globals as GG
+from utils import logger
 
 log = logger.logger
 

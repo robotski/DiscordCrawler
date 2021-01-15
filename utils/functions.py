@@ -1,6 +1,7 @@
 import logging
 import random
 import re
+
 import utils.globals as GG
 
 log = logging.getLogger(__name__)

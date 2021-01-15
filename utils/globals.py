@@ -1,10 +1,10 @@
 import json
 import random
+import time
 from typing import Dict
 
 import discord
 import motor.motor_asyncio
-import time
 from discord import VerificationLevel as VL
 from discord import VoiceRegion as VR
 from discord.ext import commands
@@ -131,6 +131,7 @@ async def fillGreyList(GREYLIST, GREYGUILDS):
     for x in GREYLIST:
         GREYGUILDS.append(x['guild'])
     return GREYLIST, GREYGUILDS
+
 
 CLEANER = [496672117384019969, 280892074247716864, 790322087981744128]
 

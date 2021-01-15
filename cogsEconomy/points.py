@@ -1,10 +1,10 @@
 import typing
 
 import discord
-import utils.globals as GG
+from discord.ext import commands
 from disputils import BotEmbedPaginator
 
-from discord.ext import commands
+import utils.globals as GG
 from utils import logger
 from utils.functions import make_ordinal
 
@@ -30,6 +30,7 @@ def list_embed(list_personals, author, user=True):
             embed.set_author(name='Points Role Leaderboard', icon_url=author.avatar_url)
         embedList.append(embed)
     return embedList
+
 
 class Points(commands.Cog):
     def __init__(self, bot):
@@ -72,7 +73,8 @@ class Points(commands.Cog):
             paginator = BotEmbedPaginator(ctx, list)
             await paginator.run()
         else:
-            await ctx.send("This server has nobody with points, try giving people some points before trying this command again.")
+            await ctx.send(
+                "This server has nobody with points, try giving people some points before trying this command again.")
 
     @leaderboard.command(name='role')
     @commands.guild_only()
@@ -90,7 +92,8 @@ class Points(commands.Cog):
             paginator = BotEmbedPaginator(ctx, list)
             await paginator.run()
         else:
-            await ctx.send("This server has nobody with points, try giving people some points before trying this command again.")
+            await ctx.send(
+                "This server has nobody with points, try giving people some points before trying this command again.")
 
     @points.command(name='add', hidden=True)
     @GG.is_staff()
@@ -108,7 +111,8 @@ class Points(commands.Cog):
             points = (amount + point['points'])
         else:
             points += amount
-        await GG.MDB.points.update_one({"user": member.id, "server": ctx.guild.id}, {"$set": {"points": points}}, upsert=True)
+        await GG.MDB.points.update_one({"user": member.id, "server": ctx.guild.id}, {"$set": {"points": points}},
+                                       upsert=True)
         await ctx.send(f"You have given {member.mention} `{amount}` points.\nBringing their total to `{points}`")
 
     @points.command(name='role', hidden=True)
@@ -127,7 +131,8 @@ class Points(commands.Cog):
             points = (amount + point['points'])
         else:
             points += amount
-        await GG.MDB.points.update_one({"role": role.id, "server": ctx.guild.id}, {"$set": {"points": points}}, upsert=True)
+        await GG.MDB.points.update_one({"role": role.id, "server": ctx.guild.id}, {"$set": {"points": points}},
+                                       upsert=True)
         await ctx.send(f"You have given {role.mention} `{amount}` points.\nBringing their total to `{points}`")
 
 

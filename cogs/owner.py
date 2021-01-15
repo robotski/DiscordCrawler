@@ -1,19 +1,19 @@
 import asyncio
+import inspect
 import os
 import subprocess
-import inspect
 
 import discord
-
-import utils.globals as GG
 from discord.ext import commands
 
+import utils.globals as GG
 from utils import logger
 
 log = logger.logger
 
 extensions = [x.replace('.py', '') for x in os.listdir(GG.COGS) if x.endswith('.py')]
 path = GG.COGS + '.'
+
 
 class Owner(commands.Cog):
     def __init__(self, bot):

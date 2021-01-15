@@ -1,11 +1,11 @@
 import asyncio
-import typing
-import discord
-from discord import Embed
-from discord.ext import commands
-from utils import logger
 from enum import Enum
+
+import discord
+from discord.ext import commands
+
 from utils import globals as GG
+from utils import logger
 
 log = logger.logger
 
@@ -29,7 +29,7 @@ class Release(commands.Cog):
 
     @commands.command()
     @GG.is_cleaner()
-    async def update(self, ctx, msg_arg = None, type = "", *, editedContent):
+    async def update(self, ctx, msg_arg=None, type="", *, editedContent):
         """Update a prior release. type can be one of the following:
         TITLE
         SUBTITLE
@@ -111,7 +111,6 @@ class Release(commands.Cog):
 
             await self.sendReleaseEmbed(message, release)
             await ctx.message.delete()
-
 
     @commands.command()
     @GG.is_cleaner()
@@ -245,4 +244,6 @@ class ReleaseModel:
         self.state = State.NEW
 
     def __repr__(self):
-        return "Title: %s\nSubtitle: %s\nSource: %s\nLink: %s\nType: %s\nMeta: %s\nAuthors: %s\nCredits: %s\nImage_Url: %s" % (self.title, self.subtitle, self.source, self.link, self.type, self.meta, self.authors, self.credits, self.image_url)
+        return "Title: %s\nSubtitle: %s\nSource: %s\nLink: %s\nType: %s\nMeta: %s\nAuthors: %s\nCredits: %s\nImage_Url: %s" % (
+        self.title, self.subtitle, self.source, self.link, self.type, self.meta, self.authors, self.credits,
+        self.image_url)

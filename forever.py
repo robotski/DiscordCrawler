@@ -1,5 +1,5 @@
-from subprocess import Popen
 import sys
+from subprocess import Popen
 
 filename = sys.argv[1]
 while True:

@@ -1,8 +1,9 @@
 import datetime
 import re
+
 import discord
-from utils import globals as GG
 from discord.ext import commands
+
 from utils import logger
 
 log = logger.logger

@@ -1,13 +1,14 @@
+import asyncio
 import traceback
 
-import asyncio
 from aiohttp import ClientResponseError, ClientOSError
 from discord import Forbidden, HTTPException, InvalidArgument, NotFound
 from discord.ext import commands
 from discord.ext.commands import CommandInvokeError
-from utils.errors import CrawlerException, InvalidArgument, EvaluationError
+
 import utils.globals as GG
 from utils import logger
+from utils.errors import CrawlerException, InvalidArgument, EvaluationError
 from utils.functions import gen_error_message, discord_trim
 
 log = logger.logger

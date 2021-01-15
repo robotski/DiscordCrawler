@@ -1,13 +1,12 @@
 import asyncio
-import typing
 import random
 
 import discord
-import utils.globals as GG
-
 from discord.ext import commands
-from utils import logger
 from disputils import BotConfirmation
+
+import utils.globals as GG
+from utils import logger
 
 log = logger.logger
 
@@ -34,9 +33,15 @@ class Raffle(commands.Cog):
         msg = await ctx.send(embed=embed)
 
         if totalTickets == 0:
-            self.bot.mdb['raffle'].insert_one({"id": int(id), "msgId": f"{msg.id}", "channelId": f"{ctx.message.channel.id}", "serverId": f"{ctx.guild.id}", "title": title, "description": description, "cost": cost, "boughtTickets": 0, "ended": 0})
+            self.bot.mdb['raffle'].insert_one(
+                {"id": int(id), "msgId": f"{msg.id}", "channelId": f"{ctx.message.channel.id}",
+                 "serverId": f"{ctx.guild.id}", "title": title, "description": description, "cost": cost,
+                 "boughtTickets": 0, "ended": 0})
         else:
-            self.bot.mdb['raffle'].insert_one({"id": int(id), "msgId": f"{msg.id}", "channelId": f"{ctx.message.channel.id}", "serverId": f"{ctx.guild.id}", "title": title, "description": description, "cost": cost, "totalTickets": totalTickets, "boughtTickets": 0, "ended": 0})
+            self.bot.mdb['raffle'].insert_one(
+                {"id": int(id), "msgId": f"{msg.id}", "channelId": f"{ctx.message.channel.id}",
+                 "serverId": f"{ctx.guild.id}", "title": title, "description": description, "cost": cost,
+                 "totalTickets": totalTickets, "boughtTickets": 0, "ended": 0})
 
     @raffle.command(name='title')
     @commands.guild_only()
@@ -52,7 +57,8 @@ class Raffle(commands.Cog):
                 await ctx.message.delete()
                 raffle['title'] = title
                 totalTickets = raffle.get('totalTickets', 0)
-                embed = self.createRaffleEmbed(raffle['title'], raffle['description'], raffle['id'], totalTickets, raffle['cost'])
+                embed = self.createRaffleEmbed(raffle['title'], raffle['description'], raffle['id'], totalTickets,
+                                               raffle['cost'])
                 guild = ctx.guild
                 ch = guild.get_channel(int(raffle['channelId']))
                 message = await ch.fetch_message(int(raffle['msgId']))
@@ -77,7 +83,8 @@ class Raffle(commands.Cog):
                 await ctx.message.delete()
                 raffle['description'] = description
                 totalTickets = raffle.get('totalTickets', 0)
-                embed = self.createRaffleEmbed(raffle['title'], raffle['description'], raffle['id'], totalTickets, raffle['cost'])
+                embed = self.createRaffleEmbed(raffle['title'], raffle['description'], raffle['id'], totalTickets,
+                                               raffle['cost'])
                 guild = ctx.guild
                 ch = guild.get_channel(int(raffle['channelId']))
                 message = await ch.fetch_message(int(raffle['msgId']))
@@ -99,11 +106,13 @@ class Raffle(commands.Cog):
                 await ctx.send(f"Raffle with Id `{id}` has already ended (or was canceled).")
                 return
             else:
-                entries = await self.bot.mdb['raffleEntries'].find({"raffleId": id, "serverId": ctx.guild.id}).to_list(length=None)
+                entries = await self.bot.mdb['raffleEntries'].find({"raffleId": id, "serverId": ctx.guild.id}).to_list(
+                    length=None)
                 if entries is not None:
                     if winners > len(entries):
-                        await ctx.send("You have selected more winners for the raffle than there are entries. Please lower your total winners or wait until enough tickets are bought.\n"
-                                       f"{len(entries)} tickets were bought, this does not factor in duplicate entrants.")
+                        await ctx.send(
+                            "You have selected more winners for the raffle than there are entries. Please lower your total winners or wait until enough tickets are bought.\n"
+                            f"{len(entries)} tickets were bought, this does not factor in duplicate entrants.")
                         return
 
                     winnersList = []
@@ -162,7 +171,8 @@ class Raffle(commands.Cog):
                     totalTickets = raffle.get('totalTickets', None)
                     if totalTickets is not None:
                         if totalTickets < tickets:
-                            await ctx.send(f"There aren't enough tickets to purchase.\nThere are `{totalTickets}` remaining tickets in this raffle.")
+                            await ctx.send(
+                                f"There aren't enough tickets to purchase.\nThere are `{totalTickets}` remaining tickets in this raffle.")
                             return
 
                     for x in range(tickets):
@@ -173,8 +183,10 @@ class Raffle(commands.Cog):
                             "ticketCost": cost
                         }
                         await self.bot.mdb['raffleEntries'].insert_one(raffleEntry)
-                    await GG.MDB.points.update_one({"user": userId, "server": ctx.guild.id}, {"$set": {"points": (userPoints - totalCostTickets)}}, upsert=True)
-                    await ctx.send(f"You have purchased `{tickets}` tickets for raffle `{raffleId}`, costing a total of `{totalCostTickets}` points.\nYou have `{userPoints - totalCostTickets}` points left.")
+                    await GG.MDB.points.update_one({"user": userId, "server": ctx.guild.id},
+                                                   {"$set": {"points": (userPoints - totalCostTickets)}}, upsert=True)
+                    await ctx.send(
+                        f"You have purchased `{tickets}` tickets for raffle `{raffleId}`, costing a total of `{totalCostTickets}` points.\nYou have `{userPoints - totalCostTickets}` points left.")
                 else:
                     await ctx.send(f"You have no points, so you are not able to enter this raffle.")
         else:
@@ -197,14 +209,17 @@ class Raffle(commands.Cog):
                     await confirmation.confirm(f"Are you sure you want to cancel the raffle with id: ({raffle['id']})?")
                     if confirmation.confirmed:
                         ch = ctx.guild.get_channel(int(raffle['channelId']))
-                        await ctx.send(f"Raffle with id {raffle['id']} was canceled. Refunding all tickets to their buyers...")
+                        await ctx.send(
+                            f"Raffle with id {raffle['id']} was canceled. Refunding all tickets to their buyers...")
 
                         # Refund Tickets to buyers
-                        entries = await self.bot.mdb['raffleEntries'].find({"raffleId": id, "serverId": ctx.guild.id}).to_list(length=None)
+                        entries = await self.bot.mdb['raffleEntries'].find(
+                            {"raffleId": id, "serverId": ctx.guild.id}).to_list(length=None)
                         if entries is not None:
                             for entry in entries:
                                 user = await GG.MDB.points.find_one({"user": entry['userId'], "server": ctx.guild.id})
-                                await GG.MDB.points.update_one({"user": entry['userId'], "server": ctx.guild.id}, {"$set": {"points": (user['points'] + entry['ticketCost'])}}, upsert=True)
+                                await GG.MDB.points.update_one({"user": entry['userId'], "server": ctx.guild.id}, {
+                                    "$set": {"points": (user['points'] + entry['ticketCost'])}}, upsert=True)
                             await self.bot.mdb['raffleEntries'].delete_many({"raffleId": id, "serverId": ctx.guild.id})
 
                         message = await ch.fetch_message(int(raffle['msgId']))
@@ -242,7 +257,8 @@ class Raffle(commands.Cog):
             embed.add_field(name="Tickets available", value=f"{totalTickets}", inline=False)
 
         embed.add_field(name="Instructions", value=f"Check your points available with the `points` command.\n"
-                                                   f"To buy a ticket use ``raffle enter {id}``, if you want multiple use ``raffle enter {id} amountYouWish``.", inline=False)
+                                                   f"To buy a ticket use ``raffle enter {id}``, if you want multiple use ``raffle enter {id} amountYouWish``.",
+                        inline=False)
         embed.set_footer(text=f"Id: {id}")
         return embed
 

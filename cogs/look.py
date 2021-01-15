@@ -1,10 +1,9 @@
 import discord
-
 from discord.ext import commands
 from disputils import BotEmbedPaginator
 
-from utils import logger
 import utils.globals as GG
+from utils import logger
 
 log = logger.logger
 
@@ -94,6 +93,7 @@ class LookCommands(commands.Cog):
             await paginator.run()
         else:
             await ctx.send("No look commands found.")
+
 
 def setup(bot):
     log.info("[Cog] Look")

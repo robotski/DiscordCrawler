@@ -1,8 +1,7 @@
 import discord
+from discord.ext import commands
 
 import utils.globals as GG
-
-from discord.ext import commands
 from utils import logger
 
 log = logger.logger
@@ -29,7 +28,8 @@ class Roles(commands.Cog):
             await ctx.send("Unknown Emoji, please only use default emoji's or emoji's from this server.")
         else:
             try:
-                await GG.MDB['reactionroles'].insert_one({"guildId": ctx.guild.id, "messageId": messageId, "roleId": roleId, "emoji": str(emoji)})
+                await GG.MDB['reactionroles'].insert_one(
+                    {"guildId": ctx.guild.id, "messageId": messageId, "roleId": roleId, "emoji": str(emoji)})
                 GG.REACTIONROLES = await GG.reloadReactionRoles()
             except:
                 await message.remove_reaction(emoji, ctx.guild.me)
@@ -53,7 +53,8 @@ class Roles(commands.Cog):
             await ctx.send(
                 "Unknown Emoji, please check if this emoji is still present as a reaction on the message you supplied.")
         else:
-            await GG.MDB['reactionroles'].delete_one({"guildId": ctx.guild.id, "messageId": messageId, "roleId": roleId, "emoji": str(emoji)})
+            await GG.MDB['reactionroles'].delete_one(
+                {"guildId": ctx.guild.id, "messageId": messageId, "roleId": roleId, "emoji": str(emoji)})
             GG.REACTIONROLES = await GG.reloadReactionRoles()
 
     @commands.command()

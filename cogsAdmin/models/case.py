@@ -8,7 +8,8 @@ from cogsAdmin.models.caseType import CaseType
 
 
 class Case:
-    def __init__(self, caseId: int, caseType: CaseType, status: CaseStatus, message: str, date: datetime, target: int, mod: int):
+    def __init__(self, caseId: int, caseType: CaseType, status: CaseStatus, message: str, date: datetime, target: int,
+                 mod: int):
         self.caseId = caseId
         self.caseType = caseType
         self.status = status
@@ -19,7 +20,8 @@ class Case:
 
     @classmethod
     def from_data(cls, data):
-        return cls(data['caseId'], data['caseType'], data['status'], data['message'], data['date'], data['target'], data['mod'])
+        return cls(data['caseId'], data['caseType'], data['status'], data['message'], data['date'], data['target'],
+                   data['mod'])
 
     def to_dict(self):
         return {

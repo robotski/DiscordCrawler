@@ -1,6 +1,5 @@
-import typing
-import discord
 from discord.ext import commands
+
 import utils.globals as GG
 from utils import logger
 
@@ -24,7 +23,8 @@ class Permission(commands.Cog):
         if mm:
             em.add_field(name="Manage_Message", value=f"{mm}")
         else:
-            em.add_field(name="Manage_Message", value=f"You should really give me this permission, as it's a mandatory permission. I will have noted this to my owner.")
+            em.add_field(name="Manage_Message",
+                         value=f"You should really give me this permission, as it's a mandatory permission. I will have noted this to my owner.")
         em.add_field(name="Manage_Webhooks", value=f"{mw}")
         em.add_field(name="Attach_Files", value=f"{af}")
         em.add_field(name="Add_Reactions", value=f"{ar}")
@@ -44,7 +44,8 @@ class Permission(commands.Cog):
         if mm:
             em.add_field(name="Manage_Message", value=f"{mm}")
         else:
-            em.add_field(name="Manage_Message", value=f"You should really give me this permission, as it's a mandatory permission. I will have noted this to my owner.")
+            em.add_field(name="Manage_Message",
+                         value=f"You should really give me this permission, as it's a mandatory permission. I will have noted this to my owner.")
         em.add_field(name="Manage_Webhooks", value=f"{mw}")
         em.add_field(name="Attach_Files", value=f"{af}")
         em.add_field(name="Add_Reactions", value=f"{ar}")

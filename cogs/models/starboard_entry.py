@@ -1,6 +1,6 @@
 import asyncio
 from dataclasses import dataclass
-from typing import List, Dict, Optional, Union
+from typing import List, Optional
 
 
 @dataclass
@@ -19,6 +19,7 @@ class StarboardMessage:
     message ID, and the starboard message ID
     as well as a list of users who have added their "vote"
     """
+
     def __init__(self, **kwargs):
         self.original_message: int = kwargs.get("original_message")
         self.original_channel: int = kwargs.get("original_channel")
