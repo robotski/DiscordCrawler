@@ -22,6 +22,7 @@ class Help(commands.Cog):
             await message.add_reaction('💭')
             await message.add_reaction('❓')
             await message.add_reaction('📘')
+            await message.add_reaction('❗')
             if GG.is_staff_bool(ctx):
                 await message.add_reaction('🔒')
             await message.add_reaction('📔')
@@ -37,6 +38,7 @@ class Help(commands.Cog):
                    (user == ctx.message.author and str(reaction.emoji) == '💭') or \
                    (user == ctx.message.author and str(reaction.emoji) == '❓') or \
                    (user == ctx.message.author and str(reaction.emoji) == '📘') or \
+                   (user == ctx.message.author and str(reaction.emoji) == '❗') or \
                    (user == ctx.message.author and str(reaction.emoji) == '🔒') or \
                    (user == ctx.message.author and str(reaction.emoji) == '📔') or \
                    (user == ctx.message.author and str(reaction.emoji) == '❌')
@@ -57,6 +59,8 @@ class Help(commands.Cog):
                 embed = self.infoCommand(ctx)
             if str(reaction.emoji) == '📘':
                 embed = self.dictCommand(ctx)
+            if str(reaction.emoji) == '❗':
+                embed = self.sockCommand(ctx)
             if str(reaction.emoji) == '🔒':
                 if GG.is_staff_bool(ctx):
                     embed = self.staffCommand(ctx)
@@ -75,8 +79,8 @@ class Help(commands.Cog):
                 embed = self.helpCommand(ctx)
             if str(reaction.emoji) == '❌':
                 await message.delete()
-                if not isinstance(message.channel, discord.DMChannel):
-                    await ctx.message.delete()
+                # if not isinstance(message.channel, discord.DMChannel):
+                    # await ctx.message.delete()
             if embed is not None:
                 await message.edit(embed=embed)
                 if not isinstance(message.channel, discord.DMChannel):
@@ -92,6 +96,7 @@ class Help(commands.Cog):
         embed.add_field(name='💬', value='Quote')
         embed.add_field(name='💭', value='Personal Quotes')
         embed.add_field(name='📘', value='Dictionary')
+        embed.add_field(name='❗', value='Custom Sock Commands™')
         embed.add_field(name='❓', value='Information')
         if GG.is_staff_bool(ctx):
             embed.add_field(name='🔒', value='Staff Commands')
@@ -121,6 +126,17 @@ class Help(commands.Cog):
             text='These reactions are available for 60 seconds, afterwards it will stop responding.\n📔 Returns to '
                  'the main menu.\n❌ Deletes this message from chat.')
         return embed
+
+    def sockCommand(self, ctx: commands.Context) -> discord.Embed:
+        embed = GG.EmbedWithAuthor(ctx)
+        embed.title = "Special custom Sock commands."
+        embed.add_field(name="remindme", value=f"``{self.bot.get_server_prefix(ctx.message)}remindme``\nSends you the message you want when the time is up.", inline=False)
+        embed.add_field(name="forgetme", value=f"``{self.bot.get_server_prefix(ctx.message)}forgetme``\nRemoves all your upcoming notifications.", inline=False)
+        embed.add_field(name="addStarboard", value=f"``{self.bot.get_server_prefix(ctx.message)}addStarboard``\n(STAFF ONLY)", inline=False)
+        embed.add_field(name="removeStarboard", value=f"``{self.bot.get_server_prefix(ctx.message)}removeStarboard``\n(STAFF ONLY)", inline=False)
+        embed.set_footer(text='These reactions are available for 60 seconds, afterwards it will stop responding.\n📔 Returns to ' 'the main menu.\n❌ Deletes this message from chat.')
+        return embed
+
 
     def infoCommand(self, ctx):
         embed = GG.EmbedWithAuthor(ctx)
@@ -213,8 +229,8 @@ class Help(commands.Cog):
                 embed = self.serverQuoteCommand(ctx)
             if str(reaction.emoji) == '❌':
                 await message.delete()
-                if not isinstance(message.channel, discord.DMChannel):
-                    await ctx.message.delete()
+                # if not isinstance(message.channel, discord.DMChannel):
+                    # await ctx.message.delete()
             if embed is not None:
                 await message.edit(embed=embed)
                 if not isinstance(message.channel, discord.DMChannel):
@@ -294,7 +310,7 @@ class Help(commands.Cog):
                         value=f"``{self.bot.get_server_prefix(ctx.message)}nudge <msgId>``\nMoves a message to the proper channel, with a little warning.",
                         inline=False)
         embed.add_field(name="prefix",
-                        value=f"``{self.bot.get_server_prefix(ctx.message)}prefix [prefix]``\nSets the bot's prefix for this server.\nForgot the prefix? Reset it with '@DiscordCrawler#6716 prefix ='.",
+                        value=f"``{self.bot.get_server_prefix(ctx.message)}prefix [prefix]``\nSets the bot's prefix for this server.\nForgot the prefix? Reset it with '@SockBot Beta#6925 prefix ='.",
                         inline=False)
         embed.add_field(name="purge",
                         value=f"``{self.bot.get_server_prefix(ctx.message)}purge <amount>``\nPurges an x amount of messages, with a little warning.",

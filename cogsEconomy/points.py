@@ -39,7 +39,7 @@ class Points(commands.Cog):
     @commands.group(invoke_without_command=True)
     @commands.guild_only()
     async def points(self, ctx, member: typing.Optional[discord.Member] = None):
-        '''$points [username] - Gives you the current points of [username] or yourself if no name is given.'''
+        '''=points [username] - Gives you the current points of [username] or yourself if no name is given.'''
         if member is None:
             await ctx.guild.chunk()
             member = ctx.guild.get_member(ctx.message.author.id)
@@ -60,7 +60,7 @@ class Points(commands.Cog):
     @leaderboard.command(name='user')
     @commands.guild_only()
     async def user_leaderboard(self, ctx):
-        '''$points leaderboard - Shows all users with points in descending order. Paged per 10.'''
+        '''=points leaderboard - Shows all users with points in descending order. Paged per 10.'''
         people = await GG.MDB.points.find({"server": ctx.guild.id, "user": {'$exists': True}}).to_list(length=None)
         if len(people) > 0:
             await ctx.guild.chunk()
@@ -79,7 +79,7 @@ class Points(commands.Cog):
     @leaderboard.command(name='role')
     @commands.guild_only()
     async def role_leaderboard(self, ctx):
-        '''$points leaderboard - Shows all users with points in descending order. Paged per 10.'''
+        '''=points leaderboard - Shows all users with points in descending order. Paged per 10.'''
         people = await GG.MDB.points.find({"server": ctx.guild.id, "role": {'$exists': True}}).to_list(length=None)
         if len(people) > 0:
             await ctx.guild.chunk()
@@ -99,7 +99,7 @@ class Points(commands.Cog):
     @GG.is_staff()
     @commands.guild_only()
     async def add_points(self, ctx, member: typing.Optional[discord.Member], amount):
-        '''$points add <username> <amount> - STAFF - Adds <amount> of points to <username>.'''
+        '''=points add <username> <amount> - STAFF - Adds <amount> of points to <username>.'''
         points = 0
         try:
             amount = int(amount)
@@ -119,7 +119,7 @@ class Points(commands.Cog):
     @GG.is_staff()
     @commands.guild_only()
     async def role_points(self, ctx, role: typing.Optional[discord.Role], amount):
-        '''$points role <role> <amount> - STAFF - Adds <amount> of points to <role>.'''
+        '''=points role <role> <amount> - STAFF - Adds <amount> of points to <role>.'''
         points = 0
         try:
             amount = int(amount)

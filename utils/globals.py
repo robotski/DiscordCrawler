@@ -38,7 +38,7 @@ GREYS = []
 REACTIONROLES = []
 STARBOARDS: Dict[int, Dict[str, StarboardEntry]] = {}
 
-BLACKLIST = ""
+# BLACKLIST = ""
 GREYLIST = ""
 GUILDS = []
 GREYGUILDS = []
@@ -81,30 +81,30 @@ def loadStarboards(STARBOARDSDB) -> Dict[int, Dict[str, StarboardEntry]]:
     return starboards
 
 
-async def fillBlackList(BLACKLIST, GUILDS):
-    BLACKLIST = "["
-    TERMDB = await MDB['blacklist'].find({}).to_list(length=None)
-    guildList = []
-    for x in TERMDB:
-        if x['guild'] not in guildList:
-            guildList.append(x['guild'])
-    for y in guildList:
-        guildTermList = []
-        for x in TERMDB:
-            if y == x['guild']:
-                guildTermList.append(x['term'])
-        termList = ""
-        for x in guildTermList:
-            termList += f'"{x}",'
-        termList = termList[:-1]
-        guildTerms = '{"guild":' + str(y) + ',"terms":[' + termList + ']},'
-        BLACKLIST += guildTerms
-    BLACKLIST = BLACKLIST[:-1]
-    BLACKLIST += "]"
-    BLACKLIST = json.loads(BLACKLIST)
-    for x in BLACKLIST:
-        GUILDS.append(x['guild'])
-    return BLACKLIST, GUILDS
+# async def fillBlackList(BLACKLIST, GUILDS):
+#     BLACKLIST = "["
+#     TERMDB = await MDB['blacklist'].find({}).to_list(length=None)
+#     guildList = []
+#     for x in TERMDB:
+#         if x['guild'] not in guildList:
+#             guildList.append(x['guild'])
+#     for y in guildList:
+#         guildTermList = []
+#         for x in TERMDB:
+#             if y == x['guild']:
+#                 guildTermList.append(x['term'])
+#         termList = ""
+#         for x in guildTermList:
+#             termList += f'"{x}",'
+#         termList = termList[:-1]
+#         guildTerms = '{"guild":' + str(y) + ',"terms":[' + termList + ']},'
+#         BLACKLIST += guildTerms
+#     BLACKLIST = BLACKLIST[:-1]
+#     BLACKLIST += "]"
+#     BLACKLIST = json.loads(BLACKLIST)
+#     for x in BLACKLIST:
+#         GUILDS.append(x['guild'])
+#     return BLACKLIST, GUILDS
 
 
 async def fillGreyList(GREYLIST, GREYGUILDS):

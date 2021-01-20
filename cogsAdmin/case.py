@@ -85,7 +85,7 @@ class Case(commands.Cog):
     @GG.is_staff()
     async def list_case(self, ctx, member: typing.Optional[discord.Member] = None):
         if member is None:
-            await ctx.send("Member can't be none. Proper command to use ``$case list [memberId]``")
+            await ctx.send(f"Member can't be none. Proper command to use ``{self.bot.get_server_prefix(ctx.message)}case list [memberId]``")
             return
         user = member
         guild = ctx.message.guild

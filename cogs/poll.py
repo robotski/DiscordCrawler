@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-
+import utils.globals as GG
 from utils import logger
 
 log = logger.logger
@@ -31,12 +31,11 @@ class Poll(commands.Cog):
         if not message.author.bot:
             messageContent = message.clean_content
             if messageContent.find("{") == -1:
-                pollMessage = await ctx.send(messageContent.split(' ', 1)[1])
-                await pollMessage.add_reaction('👍')
-                await pollMessage.add_reaction('👎')
-                await pollMessage.add_reaction('🤷')
+                await message.add_reaction('👍')
+                await message.add_reaction('👎')
+                await message.add_reaction('🤷')
             else:
-                await ctx.message.delete()
+                # await ctx.message.delete()
                 first = messageContent.find("{") + 1
                 second = messageContent.find("}")
                 title = messageContent[first:second]
