@@ -96,13 +96,13 @@ class Anon(commands.Cog):
                               author=author.display_name,
                               description=f"Hello, a user of your server {message.guild.name} tried to make an "
                                           f"anonymous report, but you have yet to make a delivery channel. You can do this by "
-                                          f"executing the following command: ``=addchannel <id> DELIVERY``. Thank you!")
+                                          f"executing the following command: ``{self.bot.get_server_prefix(message)}addchannel <id> DELIVERY``. Thank you!")
         try:
             await dm_channel.send(embed=Embed)
         except discord.errors.Forbidden:
             await message.channel.send(
                 f"Hello {message.guild.owner.mention}, a user just tried to make an anonymous report, but you have "
-                f"yet to make a delivery channel. You can do this by executing the following command: ``=addchannel "
+                f"yet to make a delivery channel. You can do this by executing the following command: ``{self.bot.get_server_prefix(message)}addchannel "
                 f"<id> DELIVERY``. Thank you!")
 
     async def noDeliveryChannel(self, message):

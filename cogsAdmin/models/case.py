@@ -21,7 +21,7 @@ class Case:
     @classmethod
     def from_data(cls, data):
         return cls(data['caseId'], data['caseType'], data['status'], data['message'], data['date'], data['target'],
-                   data['mod'])
+                   data['submiter'])
 
     def to_dict(self):
         return {
@@ -31,7 +31,7 @@ class Case:
             'message': self.message,
             'date': self.date,
             'target': self.target,
-            'mod': self.mod
+            'submiter': self.mod
         }
 
 

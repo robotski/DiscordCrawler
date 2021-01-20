@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import asyncio
+import random
 from os import listdir
 from os.path import isfile, join
 
@@ -6,6 +8,7 @@ import discord
 from discord.ext import commands
 
 import utils.globals as GG
+from models.quote_entry import QuoteModel
 from utils import logger
 
 log = logger.logger
@@ -13,7 +16,7 @@ log = logger.logger
 version = "v2.0.2"
 SHARD_COUNT = 1
 TESTING = False
-defaultPrefix = GG.PREFIX if not TESTING else '*'
+defaultPrefix = GG.PREFIX if not TESTING else '='
 intents = discord.Intents().all()
 
 
@@ -21,8 +24,8 @@ def get_prefix(b, message):
     if not message.guild:
         return commands.when_mentioned_or(defaultPrefix)(b, message)
 
-    gp = b.prefixes.get(str(message.guild.id), defaultPrefix)
-    return commands.when_mentioned_or(gp)(b, message)
+    gp = ['-', b.prefixes.get(str(message.guild.id), defaultPrefix)]
+    return commands.when_mentioned_or(*gp)(b, message)
 
 
 class Crawler(commands.AutoShardedBot):
@@ -34,6 +37,19 @@ class Crawler(commands.AutoShardedBot):
         self.token = GG.TOKEN
         self.mdb = GG.MDB
         self.prefixes = GG.PREFIXES
+
+        self.bg_task = self.loop.create_task(self.name_change())
+
+    async def name_change(self):
+        await self.wait_until_ready()
+        while not self.is_closed():
+            total_members = sum(len(s.members) for s in self.guilds)
+            quote = QuoteModel.from_data(
+                [d async for d in GG.MDB.quote.aggregate([{'$sample': {'size': 1}}])][0]).message
+            await bot.change_presence(activity=discord.Game(f"{random.choice(quote)}"), afk=True)
+            await asyncio.sleep(total_members + 200)
+            await bot.change_presence(activity=discord.Game(f"with {len(bot.guilds)} servers | =help | {version}"), afk=True)
+            await asyncio.sleep(total_members + 200)
 
     def get_server_prefix(self, msg):
         return get_prefix(self, msg)[-1]
@@ -52,7 +68,7 @@ class Crawler(commands.AutoShardedBot):
 
 bot = Crawler(prefix=get_prefix, intents=intents, case_insensitive=True, status=discord.Status.idle,
               description="A bot.", shard_count=SHARD_COUNT, testing=TESTING,
-              activity=discord.Game(f"$help | {version}"),
+              activity=discord.Game(f"=help | {version}"),
               help_command=commands.DefaultHelpCommand(command_attrs={"name": "oldhelp"}))
 
 
@@ -64,7 +80,7 @@ async def on_message(msg):
 
 @bot.event
 async def on_ready():
-    await bot.change_presence(activity=discord.Game(f"with {len(bot.guilds)} servers | $help | {version}"), afk=True)
+    await bot.change_presence(activity=discord.Game(f"with {len(bot.guilds)} servers | =help | {version}"), afk=True)
     print(f"Logged in as {bot.user.name} ({bot.user.id})")
 
 
@@ -95,8 +111,8 @@ async def fillGlobals():
     STAFFDB = await GG.MDB['serverstaff'].find({}).to_list(length=None)
     GG.STAFF = [int(i['roles']) for i in STAFFDB]
 
-    TERMDB = await GG.MDB['blacklist'].find({}).to_list(length=None)
-    GG.TERMS = [int(i['guild']) for i in TERMDB]
+    # TERMDB = await GG.MDB['blacklist'].find({}).to_list(length=None)
+    # GG.TERMS = [int(i['guild']) for i in TERMDB]
 
     GREYDB = await GG.MDB['greylist'].find({}).to_list(length=None)
     GG.GREYS = [int(i['guild']) for i in GREYDB]
@@ -107,7 +123,7 @@ async def fillGlobals():
     STARBOARDDB = await GG.MDB['starboards'].find({}).to_list(length=None)
     GG.STARBOARDS = GG.loadStarboards(STARBOARDDB)
 
-    GG.BLACKLIST, GG.GUILDS = await GG.fillBlackList(GG.BLACKLIST, GG.GUILDS)
+    # GG.BLACKLIST, GG.GUILDS = await GG.fillBlackList(GG.BLACKLIST, GG.GUILDS)
     GG.GREYLIST, GG.GREYGUILDS = await GG.fillGreyList(GG.GREYLIST, GG.GREYGUILDS)
     log.info("Finished Filling Globals")
 

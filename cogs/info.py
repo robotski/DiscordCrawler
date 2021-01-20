@@ -94,7 +94,7 @@ class Info(commands.Cog):
         em.add_field(name='Text Channels', value=f"{totalText}")
         em.add_field(name='Voice Channels', value=f"{totalVoice}")
         em.add_field(name="Invite",
-                     value="[Click Here](https://discordapp.com/oauth2/authorize?client_id=711472620994035743&scope=bot&permissions=805412928)")
+                     value="[Click Here](https://discord.com/api/oauth2/authorize?client_id=711472620994035743&permissions=268823632&scope=bot)")
         em.add_field(name='Source', value="[Click Here](https://github.com/robotski/DiscordCrawler)")
         em.add_field(name='Issue Tracker',
                      value="[Click Here](https://github.com/robotski/DiscordCrawler/issues)")
@@ -117,8 +117,7 @@ class Info(commands.Cog):
         em = GG.EmbedWithAuthor(ctx)
         em.title = 'Invite Me!'
         em.description = "Hi, you can easily invite me to your own server by following [this link](" \
-                         "https://discordapp.com/oauth2/authorize?client_id=711472620994035743&scope=bot&permissions" \
-                         "=805412928)!\n\nOf the 6 permissions asked, 5 are optional and 1 mandatory for optimal " \
+                         "https://discord.com/api/oauth2/authorize?client_id=711472620994035743&permissions=268823632&scope=bot)!\n\nOf the 6 permissions asked, 5 are optional and 1 mandatory for optimal " \
                          "usage of the capabilities of the bot.\n\n**Mandatory:**\n__Manage Messages__ - this allows the " \
                          "bot to remove messages from other users.\n\n**Optional:**\n__Manage Webhooks__ - There are 2 " \
                          "ways for the quote command to function. One where it will use a webhook to give a reply as " \

@@ -78,7 +78,7 @@ class Errors(commands.Cog):
 
         await ctx.send(
             f"Error: {str(error)}\nUh oh, that wasn't supposed to happen! "
-            f"Please join the Support Discord ($support) and tell the developer that: **{error_msg}!**")
+            f"Please join the Support Discord ({self.bot.get_server_prefix(ctx.message)}support) and tell the developer that: **{error_msg}!**")
         try:
             await owner.send(
                 f"**{error_msg}**\n" \
