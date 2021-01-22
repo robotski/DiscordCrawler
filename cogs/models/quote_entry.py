@@ -1,21 +1,21 @@
 from datetime import datetime
+from enum import IntEnum
 from typing import Union, List
 
 import discord
 from discord import Colour
 
-from enum import IntEnum
-
 
 class QuoteType(IntEnum):
-    OLD = 0  # Blue
-    NEW = 1  # Yellow
+    OLD = 0  # Yellow
+    NEW = 1  # Blue
 
 
 class QuoteModel:
-    def __init__(self, quoteId: int, quoteType: QuoteType, message: List[str], date: datetime, author: List[Union[int, str]], submitter: int):
-        self.quoteId = quoteId
-        self.quoteType = quoteType
+    def __init__(self, quote_id: int, quote_type: QuoteType, message: List[str], date: datetime,
+                 author: List[Union[int, str]], submitter: int):
+        self.quoteId = quote_id
+        self.quoteType = quote_type
         self.message = message
         self.date = date
         self.author = author
@@ -36,23 +36,16 @@ class QuoteModel:
         }
 
 
-async def getQuoteEmbed(ctx, quote: QuoteModel):
+async def get_quote_embed(ctx, quote: QuoteModel):
     embed = discord.Embed(description="")
-    # embed = discord.Embed()
     await ctx.guild.chunk()
     submitter = await ctx.guild.fetch_member(quote.submitter)
-    # author = await ctx.guild.fetch_member(quote.author)
 
     if quote.quoteType == QuoteType.OLD:
         embed.colour = Colour.gold()
-        # embed.title = f"Old"
 
     elif quote.quoteType == QuoteType.NEW:
         embed.colour = Colour.blue()
-        # embed.title = f"New"
-
-    # embed.title += f" added for {author.display_name}"
-    # embed.description = quote.message
 
     for i in range(len(quote.message)):
         author = quote.author[i]
@@ -60,12 +53,10 @@ async def getQuoteEmbed(ctx, quote: QuoteModel):
         if message == "":
             continue
         if author is None:
-            # embed.description += f"{message}\n"
             embed.add_field(name='\u200b', value=f"{message}", inline=False)
         else:
             if isinstance(author, int):
                 author = ctx.guild.get_member(author).display_name
-            # embed.description += f"{author}: {message}\n"
             embed.add_field(name=f"{author}:", value=f"{message}", inline=False)
 
     embed.set_footer(text=f"Quote ID: {quote.quoteId} - Added by {submitter.display_name}")
@@ -73,7 +64,7 @@ async def getQuoteEmbed(ctx, quote: QuoteModel):
     return embed
 
 
-async def getQuoteAuthorEmbed(ctx, quote: QuoteModel):
+async def get_quote_author_embed(ctx, quote: QuoteModel):
     embed = discord.Embed()
     await ctx.guild.chunk()
     submitter = await ctx.guild.fetch_member(quote.submitter)
@@ -83,7 +74,8 @@ async def getQuoteAuthorEmbed(ctx, quote: QuoteModel):
     if quote.quoteType == QuoteType.NEW:
         embed.colour = Colour.gold()
         embed.title = f"Warned on"
-        embed.description += "Warnings don't mean the end of the world. They are used to track potential rule-breakers and to keep record for the complete staff team."
+        embed.description += "Warnings don't mean the end of the world. They are used to track potential " \
+                             "rule-breakers and to keep record for the complete staff team."
 
     embed.title += f" {ctx.guild.name}"
     embed.set_footer(text=f"Quote ID: {quote.quoteId} - Added by {submitter.display_name}")

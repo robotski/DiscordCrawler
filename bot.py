@@ -1,6 +1,6 @@
-# -*- coding: utf-8 -*-
 import asyncio
 import random
+import traceback
 from os import listdir
 from os.path import isfile, join
 
@@ -48,7 +48,8 @@ class Crawler(commands.AutoShardedBot):
                 [d async for d in GG.MDB.quote.aggregate([{'$sample': {'size': 1}}])][0]).message
             await bot.change_presence(activity=discord.Game(f"{random.choice(quote)}"), afk=True)
             await asyncio.sleep(total_members + 200)
-            await bot.change_presence(activity=discord.Game(f"with {len(bot.guilds)} servers | =help | {version}"), afk=True)
+            await bot.change_presence(activity=discord.Game(f"with {len(bot.guilds)} servers | =help | {version}"),
+                                      afk=True)
             await asyncio.sleep(total_members + 200)
 
     def get_server_prefix(self, msg):
@@ -98,56 +99,42 @@ async def on_resumed():
 
 async def fillGlobals():
     log.info("Filling Globals")
-    PREFIXESDB = await GG.MDB['prefixes'].find({}).to_list(length=None)
-    GG.PREFIXES = GG.loadPrefixes(PREFIXESDB)
+    prefixes_db = await GG.MDB['prefixes'].find({}).to_list(length=None)
+    GG.PREFIXES = GG.load_prefixes(prefixes_db)
     bot.prefixes = GG.PREFIXES
 
-    CHANNELDB = await GG.MDB['channelinfo'].find({}).to_list(length=None)
-    GG.CHANNEL = GG.loadChannels(CHANNELDB)
+    channel_db = await GG.MDB['channelinfo'].find({}).to_list(length=None)
+    GG.CHANNEL = GG.load_channels(channel_db)
 
-    REPORTERSDB = await GG.MDB['reports'].find({}).to_list(length=None)
-    GG.REPORTERS = [int(i['message']) for i in REPORTERSDB]
+    reporters_db = await GG.MDB['reports'].find({}).to_list(length=None)
+    GG.REPORTERS = [int(i['message']) for i in reporters_db]
 
-    STAFFDB = await GG.MDB['serverstaff'].find({}).to_list(length=None)
-    GG.STAFF = [int(i['roles']) for i in STAFFDB]
+    staff_db = await GG.MDB['serverstaff'].find({}).to_list(length=None)
+    GG.STAFF = [int(i['roles']) for i in staff_db]
 
-    # TERMDB = await GG.MDB['blacklist'].find({}).to_list(length=None)
-    # GG.TERMS = [int(i['guild']) for i in TERMDB]
+    reaction_roles_db = await GG.MDB['reactionroles'].find({}).to_list(length=None)
+    GG.REACTION_ROLES = GG.load_reaction_roles(reaction_roles_db)
 
-    # GREYDB = await GG.MDB['greylist'].find({}).to_list(length=None)
-    # GG.GREYS = [int(i['guild']) for i in GREYDB]
+    starboard_db = await GG.MDB['starboards'].find({}).to_list(length=None)
+    GG.STARBOARDS = GG.load_starboards(starboard_db)
 
-    REACTIONROLESDB = await GG.MDB['reactionroles'].find({}).to_list(length=None)
-    GG.REACTIONROLES = GG.loadReactionRoles(REACTIONROLESDB)
-
-    STARBOARDDB = await GG.MDB['starboards'].find({}).to_list(length=None)
-    GG.STARBOARDS = GG.loadStarboards(STARBOARDDB)
-
-    # GG.BLACKLIST, GG.GUILDS = await GG.fillBlackList(GG.BLACKLIST, GG.GUILDS)
-    # GG.GREYLIST, GG.GREYGUILDS = await GG.fillGreyList(GG.GREYLIST, GG.GREYGUILDS)
     log.info("Finished Filling Globals")
+
+
+def loader(cog):
+    global extension, e
+    for extension in [f.replace('.py', '') for f in listdir(cog) if isfile(join(cog, f))]:
+        try:
+            bot.load_extension(cog + "." + extension)
+        except (ValueError, Exception) as e:
+            log.error(f'Failed to load extension {extension}')
+            log.error(traceback.format_exc())
 
 
 if __name__ == "__main__":
     bot.state = "run"
-    for extension in [f.replace('.py', '') for f in listdir(GG.COGS) if isfile(join(GG.COGS, f))]:
-        try:
-            bot.load_extension(GG.COGS + "." + extension)
-        except Exception as e:
-            log.error(f'Failed to load extension {extension}')
-    for extension in [f.replace('.py', '') for f in listdir(GG.COGSECONOMY) if isfile(join(GG.COGSECONOMY, f))]:
-        try:
-            bot.load_extension(GG.COGSECONOMY + "." + extension)
-        except Exception as e:
-            log.error(f'Failed to load extension {extension}')
-    for extension in [f.replace('.py', '') for f in listdir(GG.COGSADMIN) if isfile(join(GG.COGSADMIN, f))]:
-        try:
-            bot.load_extension(GG.COGSADMIN + "." + extension)
-        except Exception as e:
-            log.error(f'Failed to load extension {extension}')
-    for extension in [f.replace('.py', '') for f in listdir(GG.COGSEVENTS) if isfile(join(GG.COGSEVENTS, f))]:
-        try:
-            bot.load_extension(GG.COGSEVENTS + "." + extension)
-        except Exception as e:
-            log.error(f'Failed to load extension {extension}')
+    loader(GG.COGS)
+    loader(GG.COGS_ECONOMY)
+    loader(GG.COGS_ADMIN)
+    loader(GG.COGS_EVENTS)
     bot.run(bot.token)

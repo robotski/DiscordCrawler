@@ -1,12 +1,13 @@
-import json
+import logging
 import random
 import time
+import traceback
 from typing import Dict
 
 import discord
 import motor.motor_asyncio
-from discord import VerificationLevel as VL
-from discord import VoiceRegion as VR
+from discord import VerificationLevel
+from discord import VoiceRegion
 from discord.ext import commands
 from environs import Env
 
@@ -18,9 +19,9 @@ env.read_env()
 PREFIX = env('PREFIX')
 TOKEN = env('TOKEN')
 COGS = env('COGS')
-COGSECONOMY = env('COGSECONOMY')
-COGSADMIN = env('COGSADMIN')
-COGSEVENTS = env('COGSEVENTS')
+COGS_ECONOMY = env('COGSECONOMY')
+COGS_ADMIN = env('COGSADMIN')
+COGS_EVENTS = env('COGSEVENTS')
 OWNER = int(env('OWNER'))
 MONGODB = env('MONGODB')
 
@@ -34,110 +35,51 @@ PREFIXES = []
 REPORTERS = []
 STAFF = []
 TERMS = []
-# GREYS = []
-REACTIONROLES = []
+REACTION_ROLES = []
 STARBOARDS: Dict[int, Dict[str, StarboardEntry]] = {}
 RECORDERS: Dict[int, discord.Message] = {}
 
-# BLACKLIST = ""
-# GREYLIST = ""
-# GUILDS = []
-# GREYGUILDS = []
 
-
-def loadChannels(CHANNELDB):
+def load_channels(channel_db):
     channel = {}
-    for i in CHANNELDB:
+    for i in channel_db:
         channel[int(i['channel'])] = i['type']
     return channel
 
 
-def loadPrefixes(PREFIXESDB):
+def load_prefixes(prefixes_db):
     prefixes = {}
-    for i in PREFIXESDB:
+    for i in prefixes_db:
         prefixes[str(i['guild'])] = str(i['prefix'])
     return prefixes
 
 
-def loadReactionRoles(REACTIONROLESDB):
-    reactionRole = {}
-    for i in REACTIONROLESDB:
+def load_reaction_roles(reaction_roles_db):
+    reaction_role = {}
+    for i in reaction_roles_db:
         key = int(i['messageId'])
-        if key not in reactionRole:
-            reactionRole[key] = []
-        reactionRole[key].append((i['roleId'], i['emoji']))
-    return reactionRole
+        if key not in reaction_role:
+            reaction_role[key] = []
+        reaction_role[key].append((i['roleId'], i['emoji']))
+    return reaction_role
 
 
-def loadStarboards(STARBOARDSDB) -> Dict[int, Dict[str, StarboardEntry]]:
+def load_starboards(starboards_db) -> Dict[int, Dict[str, StarboardEntry]]:
     starboards = {}
-    for all_data in STARBOARDSDB:
+    for all_data in starboards_db:
         key = int(all_data['guild'])
         if key not in starboards:
             starboards[key] = {}
         for name, data in all_data['starboards'].items():
             starboard = StarboardEntry.from_json(data)
             starboards[key][name] = starboard
-        # starboard[key].append(all_data['starboards'])
     return starboards
-
-
-# async def fillBlackList(BLACKLIST, GUILDS):
-#     BLACKLIST = "["
-#     TERMDB = await MDB['blacklist'].find({}).to_list(length=None)
-#     guildList = []
-#     for x in TERMDB:
-#         if x['guild'] not in guildList:
-#             guildList.append(x['guild'])
-#     for y in guildList:
-#         guildTermList = []
-#         for x in TERMDB:
-#             if y == x['guild']:
-#                 guildTermList.append(x['term'])
-#         termList = ""
-#         for x in guildTermList:
-#             termList += f'"{x}",'
-#         termList = termList[:-1]
-#         guildTerms = '{"guild":' + str(y) + ',"terms":[' + termList + ']},'
-#         BLACKLIST += guildTerms
-#     BLACKLIST = BLACKLIST[:-1]
-#     BLACKLIST += "]"
-#     BLACKLIST = json.loads(BLACKLIST)
-#     for x in BLACKLIST:
-#         GUILDS.append(x['guild'])
-#     return BLACKLIST, GUILDS
-
-
-# async def fillGreyList(GREYLIST, GREYGUILDS):
-#     GREYLIST = "["
-#     TERMDB = await MDB['greylist'].find({}).to_list(length=None)
-#     guildList = []
-#     for x in TERMDB:
-#         if x['guild'] not in guildList:
-#             guildList.append(x['guild'])
-#     for y in guildList:
-#         guildTermList = []
-#         for x in TERMDB:
-#             if y == x['guild']:
-#                 guildTermList.append(x['term'])
-#         termList = ""
-#         for x in guildTermList:
-#             termList += f'"{x}",'
-#         termList = termList[:-1]
-#         guildTerms = '{"guild":' + str(y) + ',"terms":[' + termList + ']},'
-#         GREYLIST += guildTerms
-#     GREYLIST = GREYLIST[:-1]
-#     GREYLIST += "]"
-#     GREYLIST = json.loads(GREYLIST)
-#     for x in GREYLIST:
-#         GREYGUILDS.append(x['guild'])
-#     return GREYLIST, GREYGUILDS
 
 
 CLEANER = [496672117384019969, 280892074247716864, 790322087981744128]
 
 
-def checkPermission(ctx, permission):
+def check_permission(ctx, permission):
     if ctx.guild is None:
         return True
     if permission == "mm":
@@ -161,41 +103,16 @@ def is_in_guild(guild_id):
 
 def is_staff():
     async def predicate(ctx):
-        global allowed
-        if isinstance(ctx.author, discord.Member):
-            if ctx.author.roles is not None:
-                for r in ctx.author.roles:
-                    if r.id in STAFF:
-                        allowed = True
-                        break
-                    else:
-                        allowed = False
-
-                if ctx.author.id == OWNER or ctx.author.id == ctx.guild.owner_id:
-                    allowed = True
-            else:
-                allowed = False
-        else:
-            try:
-                if ctx.author.id == OWNER or ctx.author.id == ctx.guild.owner_id:
-                    allowed = True
-                else:
-                    allowed = False
-            except Exception:
-                allowed = False
-
-        try:
-            if ctx.guild.get_member(ctx.author.id).guild_permissions.administrator:
-                allowed = True
-        except:
-            pass
-
-        return allowed
+        return global_allowed(ctx)
 
     return commands.check(predicate)
 
 
 def is_staff_bool(ctx):
+    return global_allowed(ctx)
+
+
+def global_allowed(ctx):
     global allowed
     if isinstance(ctx.author, discord.Member):
         if ctx.author.roles is not None:
@@ -216,15 +133,15 @@ def is_staff_bool(ctx):
                 allowed = True
             else:
                 allowed = False
-        except Exception:
+        except (ValueError, Exception):
+            logging.error(traceback.format_exc())
             allowed = False
-
     try:
         if ctx.guild.get_member(ctx.author.id).guild_permissions.administrator:
             allowed = True
-    except:
+    except (ValueError, Exception):
+        logging.error(traceback.format_exc())
         pass
-
     return allowed
 
 
@@ -242,73 +159,73 @@ def is_cleaner():
     return commands.check(predicate)
 
 
-def cutStringInPieces(input):
+def cut_string_in_pieces(inp):
     n = 900
-    output = [input[i:i + n] for i in range(0, len(input), n)]
+    output = [inp[i:i + n] for i in range(0, len(inp), n)]
     return output
 
 
-def cutListInPieces(input):
+def cut_list_in_pieces(inp):
     n = 30
-    output = [input[i:i + n] for i in range(0, len(input), n)]
+    output = [inp[i:i + n] for i in range(0, len(inp), n)]
     return output
 
 
-def countChannels(channels):
-    channelCount = 0
-    voiceCount = 0
+def count_channels(channels):
+    channel_count = 0
+    voice_count = 0
     for x in channels:
         if type(x) is discord.TextChannel:
-            channelCount += 1
+            channel_count += 1
         elif type(x) is discord.VoiceChannel:
-            voiceCount += 1
+            voice_count += 1
         else:
             pass
-    return channelCount, voiceCount
+    return channel_count, voice_count
 
 
 def get_server_prefix(self, msg):
     return self.get_prefix(self, msg)[-1]
 
 
-VERIFLEVELS = {VL.none: "None", VL.low: "Low", VL.medium: "Medium", VL.high: "(╯°□°）╯︵  ┻━┻",
-               VL.extreme: "┻━┻ミヽ(ಠ益ಠ)ノ彡┻━┻"}
-REGION = {VR.brazil: ":flag_br: Brazil",
-          VR.eu_central: ":flag_eu: Central Europe",
-          VR.singapore: ":flag_sg: Singapore",
-          VR.us_central: ":flag_us: U.S. Central",
-          VR.sydney: ":flag_au: Sydney",
-          VR.us_east: ":flag_us: U.S. East",
-          VR.us_south: ":flag_us: U.S. South",
-          VR.us_west: ":flag_us: U.S. West",
-          VR.eu_west: ":flag_eu: Western Europe",
-          VR.vip_us_east: ":flag_us: VIP U.S. East",
-          VR.vip_us_west: ":flag_us: VIP U.S. West",
-          VR.vip_amsterdam: ":flag_nl: VIP Amsterdam",
-          VR.london: ":flag_gb: London",
-          VR.amsterdam: ":flag_nl: Amsterdam",
-          VR.frankfurt: ":flag_de: Frankfurt",
-          VR.hongkong: ":flag_hk: Hong Kong",
-          VR.russia: ":flag_ru: Russia",
-          VR.japan: ":flag_jp: Japan",
-          VR.southafrica: ":flag_za:  South Africa"}
+V_LEVELS = {VerificationLevel.none: "None", VerificationLevel.low: "Low", VerificationLevel.medium: "Medium",
+            VerificationLevel.high: "(╯°□°）╯︵  ┻━┻", VerificationLevel.extreme: "┻━┻ミヽ(ಠ益ಠ)ノ彡┻━┻"}
+REGION = {VoiceRegion.brazil: ":flag_br: Brazil",
+          VoiceRegion.eu_central: ":flag_eu: Central Europe",
+          VoiceRegion.singapore: ":flag_sg: Singapore",
+          VoiceRegion.us_central: ":flag_us: U.S. Central",
+          VoiceRegion.sydney: ":flag_au: Sydney",
+          VoiceRegion.us_east: ":flag_us: U.S. East",
+          VoiceRegion.us_south: ":flag_us: U.S. South",
+          VoiceRegion.us_west: ":flag_us: U.S. West",
+          VoiceRegion.eu_west: ":flag_eu: Western Europe",
+          VoiceRegion.vip_us_east: ":flag_us: VIP U.S. East",
+          VoiceRegion.vip_us_west: ":flag_us: VIP U.S. West",
+          VoiceRegion.vip_amsterdam: ":flag_nl: VIP Amsterdam",
+          VoiceRegion.london: ":flag_gb: London",
+          VoiceRegion.amsterdam: ":flag_nl: Amsterdam",
+          VoiceRegion.frankfurt: ":flag_de: Frankfurt",
+          VoiceRegion.hongkong: ":flag_hk: Hong Kong",
+          VoiceRegion.russia: ":flag_ru: Russia",
+          VoiceRegion.japan: ":flag_jp: Japan",
+          VoiceRegion.southafrica: ":flag_za:  South Africa"}
 
 
-def checkDays(date):
+def check_days(date):
     now = date.fromtimestamp(time.time())
     diff = now - date
     days = diff.days
     return f"{days} {'day' if days == 1 else 'days'} ago"
 
 
-async def reloadReactionRoles():
-    REACTIONROLESDB = await MDB['reactionroles'].find({}).to_list(length=None)
-    return loadReactionRoles(REACTIONROLESDB)
+async def reload_reaction_roles():
+    reaction_roles_db = await MDB['reactionroles'].find({}).to_list(length=None)
+    return load_reaction_roles(reaction_roles_db)
 
 
-async def reloadStarboards():
-    STARBOARDSDB = await MDB['starboards'].find({}).to_list(length=None)
-    return loadStarboards(STARBOARDSDB)
+async def reload_starboards():
+    starboards_db = await MDB['starboards'].find({}).to_list(length=None)
+    return load_starboards(starboards_db)
 
 
 class EmbedWithAuthor(discord.Embed):

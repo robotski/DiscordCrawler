@@ -30,7 +30,7 @@ class Roles(commands.Cog):
             try:
                 await GG.MDB['reactionroles'].insert_one(
                     {"guildId": ctx.guild.id, "messageId": messageId, "roleId": roleId, "emoji": str(emoji)})
-                GG.REACTIONROLES = await GG.reloadReactionRoles()
+                GG.REACTION_ROLES = await GG.reload_reaction_roles()
             except:
                 await message.remove_reaction(emoji, ctx.guild.me)
                 await ctx.send(f"You are trying to add a reaction to the message that already exists, or the role it would give as reaction is already in use.\nPlease check if this is correct, if not, please contact my owner in `{self.bot.get_server_prefix(ctx.message)}support`")
@@ -54,7 +54,7 @@ class Roles(commands.Cog):
         else:
             await GG.MDB['reactionroles'].delete_one(
                 {"guildId": ctx.guild.id, "messageId": messageId, "roleId": roleId, "emoji": str(emoji)})
-            GG.REACTIONROLES = await GG.reloadReactionRoles()
+            GG.REACTION_ROLES = await GG.reload_reaction_roles()
 
     @commands.command()
     @commands.guild_only()
@@ -75,9 +75,9 @@ class Roles(commands.Cog):
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
-        if payload.message_id in GG.REACTIONROLES:
+        if payload.message_id in GG.REACTION_ROLES:
             emoji = payload.emoji
-            server = GG.REACTIONROLES[payload.message_id]
+            server = GG.REACTION_ROLES[payload.message_id]
             roleId = None
             for x in server:
                 dbEmoji = x[1][2:].split(":")
@@ -93,9 +93,9 @@ class Roles(commands.Cog):
 
     @commands.Cog.listener()
     async def on_raw_reaction_remove(self, payload):
-        if payload.message_id in GG.REACTIONROLES:
+        if payload.message_id in GG.REACTION_ROLES:
             emoji = payload.emoji
-            server = GG.REACTIONROLES[payload.message_id]
+            server = GG.REACTION_ROLES[payload.message_id]
             roleId = None
             for x in server:
                 dbEmoji = x[1][2:].split(":")
