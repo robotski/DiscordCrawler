@@ -1,16 +1,12 @@
 import datetime
 import re
-
 from datetime import datetime
 
 import discord
-from discord import Colour
-from models.quote_entry import QuoteModel, QuoteType, getQuoteEmbed, getQuoteAuthorEmbed
 from discord.ext import commands
 
-from disputils import BotEmbedPaginator
-
 import utils.globals as GG
+from models.quote_entry import QuoteModel, QuoteType, getQuoteEmbed
 from utils import logger
 
 log = logger.logger
@@ -27,18 +23,69 @@ async def get_next_quote_num():
 class Quote(commands.Cog):
     def __init__(self, bot: discord.ext.commands.Bot):
         self.bot: discord.ext.commands.Bot = bot
+        self.active_quote = {}
 
-    @commands.command(aliases=['oqa'])
+    @commands.Cog.listener()
+    async def on_raw_reaction_remove(self, payload: discord.RawReactionActionEvent) -> None:
+        user = payload.user_id
+        if user not in GG.RECORDERS:
+            return
+        if str(payload.emoji) == '📝':
+            msg = await self.bot.get_channel(id=payload.channel_id).fetch_message(id=payload.message_id)
+            index = self.active_quote[user][1].index(msg.clean_content)
+            del self.active_quote[user][0][index]
+            del self.active_quote[user][1][index]
+
+    @commands.Cog.listener()
+    async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent) -> None:
+        user = payload.user_id
+        message = payload.message_id
+        if user not in GG.RECORDERS:
+            return
+        if GG.RECORDERS[user].id == message:
+            if str(payload.emoji) == '❌':
+                channel: discord.TextChannel = self.bot.get_channel(id=payload.channel_id)
+                await GG.RECORDERS[user].delete()
+                await channel.send("Canceled!")
+                del GG.RECORDERS[user]
+                del self.active_quote[user]
+                return
+            channel = self.bot.get_channel(id=payload.channel_id)
+            ctx: discord.Message = GG.RECORDERS[user]
+
+            if len(self.active_quote[user][0]) == 0:
+                await channel.send(f"<@{user}> You didn't select any messages!")
+                return
+
+            memberDB = await GG.MDB.members.find_one({"server": payload.guild_id, "user": user})
+            quoteId = await get_next_quote_num()
+
+            if memberDB is None:
+                memberDB = {"server": payload.guild_id, "user": user, "quoteIds": [quoteId]}
+            else:
+                memberDB['quoteIds'].append(quoteId)
+
+            quote = QuoteModel(quoteId, QuoteType.NEW, self.active_quote[user][1], ctx.created_at,
+                               self.active_quote[user][0], user)
+            await GG.MDB.quote.insert_one(quote.to_dict())
+            await GG.MDB.members.update_one({"server": payload.guild_id, "user": user}, {"$set": memberDB}, upsert=True)
+            embed = await getQuoteEmbed(ctx, quote)
+            await GG.RECORDERS[user].delete()
+            await channel.send(embed=embed)
+            del GG.RECORDERS[user]
+            del self.active_quote[user]
+        if str(payload.emoji) == '📝':
+            if user not in self.active_quote:
+                self.active_quote[user] = [[], []]
+            msg = await self.bot.get_channel(id=payload.channel_id).fetch_message(id=payload.message_id)
+            member, line = msg.author.id, msg.clean_content
+            self.active_quote[user][0].append(member)
+            self.active_quote[user][1].append(line)
+
+    @commands.command(aliases=['qa', 'aq'])
     @commands.guild_only()
-    async def oldquoteadd(self, ctx: commands.Context):
-        def check(ms):
-            return ctx.message.channel and ms.author == ctx.message.author
-
-        await ctx.send("What would you like the quote to be?")
-        message = await self.bot.wait_for('message', check=check)
-
-        async with ctx.channel.typing():
-
+    async def quoteadd(self, ctx: commands.Context, *, quote: str = None):
+        if quote:
             memberDB = await GG.MDB.members.find_one({"server": ctx.guild.id, "user": ctx.author.id})
             quoteId = await get_next_quote_num()
 
@@ -47,41 +94,77 @@ class Quote(commands.Cog):
             else:
                 memberDB['quoteIds'].append(quoteId)
 
-            # message = [word for line in message.clean_content.splitlines() for word in line.split()]
+            await self.save_quote(ctx, memberDB, quote, quoteId)
+            return
+
+        if ctx.author.id in GG.RECORDERS:
+            message = GG.RECORDERS[ctx.author.id]
+            await ctx.send(embed=discord.Embed(
+                description="You already have an active recorder [here]({link})".format(link=message.jump_url)))
+            return
+        message: discord.Message = await ctx.send(
+            "Now recording. React to messages with 📝 to save them. Click ✅ to finish or ❌ to cancel.")
+        GG.RECORDERS[ctx.author.id] = message
+        if ctx.author.id not in self.active_quote:
+            self.active_quote[ctx.author.id] = [[], []]
+        await message.add_reaction('✅')
+        await message.add_reaction('❌')
+
+    @commands.command(aliases=['oqa'])
+    @commands.guild_only()
+    async def oldquoteadd(self, ctx: commands.Context, *, quote: str = None):
+        def check(ms):
+            return ctx.message.channel and ms.author == ctx.message.author
+
+        memberDB = await GG.MDB.members.find_one({"server": ctx.guild.id, "user": ctx.author.id})
+        quoteId = await get_next_quote_num()
+
+        if memberDB is None:
+            memberDB = {"server": ctx.guild.id, "user": ctx.author.id, "quoteIds": [quoteId]}
+        else:
+            memberDB['quoteIds'].append(quoteId)
+
+        if quote:
+            await self.save_quote(ctx, memberDB, quote, quoteId)
+            return
+
+        await ctx.send("What would you like the quote to be?")
+        message = await self.bot.wait_for('message', check=check)
+
+        await self.save_quote(ctx, memberDB, message.clean_content, quoteId)
+
+    async def save_quote(self, ctx, memberDB, message, quoteId):
+        async with ctx.channel.typing():
             member_list = []
             line_list = []
-            try:
-                curr = [[word for word in line.split(": ", 1)] for line in message.clean_content.splitlines()]
-                for line in curr:
+            curr = [[word for word in line.split(": ", 1)] for line in message.splitlines()]
+            for line in curr:
+                try:
                     member = (await ctx.guild.query_members(line[0]))
                     if len(member) != 0:
                         member_list.append(member[0].id)
                     else:
                         member_list.append(line[0])
                     line_list.append(line[1])
-            except:
-                member_list = []
-                line_list = []
-                for line in message.clean_content.splitlines():
+                except:
+                    del member_list[-1]
+                    if len(member_list) != len(line_list):
+                        del line_list[-1]
                     member_list.append(None)
-                    line_list.append(line)
-
+                    line_list.append(line[0])
             quote = QuoteModel(quoteId, QuoteType.OLD, line_list, ctx.message.created_at, member_list, ctx.author.id)
             await GG.MDB.quote.insert_one(quote.to_dict())
-            await GG.MDB.members.update_one({"server": ctx.guild.id, "user": ctx.author.id}, {"$set": memberDB}, upsert=True)
+            await GG.MDB.members.update_one({"server": ctx.guild.id, "user": ctx.author.id}, {"$set": memberDB},
+                                            upsert=True)
             embed = await getQuoteEmbed(ctx, quote)
             await ctx.send(embed=embed)
-
-
-
 
     @commands.command(aliases=['q'])
     @commands.guild_only()
     async def quote(self, ctx, msgId: int = None, *, reply=None):
-        if not msgId:
+        if msgId is None:
             async with ctx.channel.typing():
-                quote = QuoteModel.from_data([d async for d in GG.MDB.quote.aggregate([{'$sample': {'size': 1}}])][0])
-                # quote = [d for d in GG.MDB.quote.aggregate([{"$sample": {"size": 1}}])][0]
+                quote = QuoteModel.from_data(await GG.MDB.quote.aggregate([{'$sample': {'size': 1}}]).next())
                 embed = await getQuoteEmbed(ctx, quote)
                 await ctx.send(embed=embed)
                 return
@@ -90,55 +173,21 @@ class Quote(commands.Cog):
             await ctx.send(content=":x:" + " **I work only with quote IDs.**")
             return
 
-
-
-        # message = None
-        # try:
-        #     msgId = int(msgId)
-        #     perms = ctx.guild.me.permissions_in(ctx.channel)
-        # except ValueError:
-        #     if perms.read_messages and perms.read_message_history:
-        #         async for msg in ctx.channel.history(limit=100, before=ctx.message):
-        #             if msgId.lower() in msg.content.lower():
-        #                 message = msg
-        #                 break
-        # else:
-        #     try:
-        #         message = await ctx.channel.fetch_message(msgId)
-        #     except:
-        #         for channel in ctx.guild.text_channels:
-        #             perms = ctx.guild.me.permissions_in(channel)
-        #             if channel == ctx.channel or not perms.read_messages or not perms.read_message_history:
-        #                 continue
-        #
-        #             try:
-        #                 message = await channel.fetch_message(msgId)
-        #             except:
-        #                 continue
-        #             else:
-        #                 break
-        #
-        # if message:
-        #     if not message.content and message.embeds and message.author.bot:
-        #         await ctx.send(
-        #             content='Raw embed from `' + str(message.author).strip('`') + '` in ' + message.channel.mention,
-        #             embed=quote_embed(ctx.channel, message, ctx.author))
-        #     else:
-        #         await ctx.send(embed=quote_embed(ctx.channel, message, ctx.author))
-        #
-        #     if reply:
-        #         if perms.manage_webhooks:
-        #             webhook = await ctx.channel.create_webhook(name="Quoting")
-        #             await webhook.send(content=reply.replace('@everyone', '@еveryone').replace('@here', '@hеre'),
-        #                                username=ctx.author.display_name, avatar_url=ctx.author.avatar_url)
-        #             await webhook.delete()
-        #         else:
-        #             await ctx.send(
-        #                 content='**' + ctx.author.display_name + '\'s reply:**\n' + reply.replace('@everyone',
-        #                                                                                           '@еveryone').replace(
-        #                     '@here', '@hеre'))
-        # else:
-        #     await ctx.send(content=":x:" + ' **Could not find the specified message.**')
+        if msgId > 0:
+            value = await GG.MDB.quote.find_one({"quoteId": msgId})
+        elif msgId == 0:
+            await ctx.send(
+                content=":x:" + ' **Quote selection has been reworked. -1 is the most recent, -2 is the second most, and so on.**')
+            return
+        else:
+            value = await GG.MDB.quote.find().sort([("_id", -1)]).limit(-msgId).skip(-msgId - 1).next()
+        if value is None:
+            await ctx.send(content=":x:" + ' **Could not find the specified message.**')
+            return
+        quote = QuoteModel.from_data(value)
+        embed = await getQuoteEmbed(ctx, quote)
+        await ctx.send(embed=embed)
+        return
 
 
 def parse_time(timestamp):

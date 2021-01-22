@@ -38,6 +38,7 @@ class QuoteModel:
 
 async def getQuoteEmbed(ctx, quote: QuoteModel):
     embed = discord.Embed(description="")
+    # embed = discord.Embed()
     await ctx.guild.chunk()
     submitter = await ctx.guild.fetch_member(quote.submitter)
     # author = await ctx.guild.fetch_member(quote.author)
@@ -53,15 +54,19 @@ async def getQuoteEmbed(ctx, quote: QuoteModel):
     # embed.title += f" added for {author.display_name}"
     # embed.description = quote.message
 
-    for i in range(len(quote.author)):
+    for i in range(len(quote.message)):
         author = quote.author[i]
         message = quote.message[i]
+        if message == "":
+            continue
         if author is None:
-            embed.description += f"{message}\n"
+            # embed.description += f"{message}\n"
+            embed.add_field(name='\u200b', value=f"{message}", inline=False)
         else:
             if isinstance(author, int):
-                author = (await ctx.guild.fetch_member(author)).display_name
-            embed.description += f"{author}: {message}\n"
+                author = ctx.guild.get_member(author).display_name
+            # embed.description += f"{author}: {message}\n"
+            embed.add_field(name=f"{author}:", value=f"{message}", inline=False)
 
     embed.set_footer(text=f"Quote ID: {quote.quoteId} - Added by {submitter.display_name}")
     embed.timestamp = quote.date
