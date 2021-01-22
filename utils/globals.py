@@ -34,14 +34,15 @@ PREFIXES = []
 REPORTERS = []
 STAFF = []
 TERMS = []
-GREYS = []
+# GREYS = []
 REACTIONROLES = []
 STARBOARDS: Dict[int, Dict[str, StarboardEntry]] = {}
+RECORDERS: Dict[int, discord.Message] = {}
 
 # BLACKLIST = ""
-GREYLIST = ""
-GUILDS = []
-GREYGUILDS = []
+# GREYLIST = ""
+# GUILDS = []
+# GREYGUILDS = []
 
 
 def loadChannels(CHANNELDB):
@@ -107,30 +108,30 @@ def loadStarboards(STARBOARDSDB) -> Dict[int, Dict[str, StarboardEntry]]:
 #     return BLACKLIST, GUILDS
 
 
-async def fillGreyList(GREYLIST, GREYGUILDS):
-    GREYLIST = "["
-    TERMDB = await MDB['greylist'].find({}).to_list(length=None)
-    guildList = []
-    for x in TERMDB:
-        if x['guild'] not in guildList:
-            guildList.append(x['guild'])
-    for y in guildList:
-        guildTermList = []
-        for x in TERMDB:
-            if y == x['guild']:
-                guildTermList.append(x['term'])
-        termList = ""
-        for x in guildTermList:
-            termList += f'"{x}",'
-        termList = termList[:-1]
-        guildTerms = '{"guild":' + str(y) + ',"terms":[' + termList + ']},'
-        GREYLIST += guildTerms
-    GREYLIST = GREYLIST[:-1]
-    GREYLIST += "]"
-    GREYLIST = json.loads(GREYLIST)
-    for x in GREYLIST:
-        GREYGUILDS.append(x['guild'])
-    return GREYLIST, GREYGUILDS
+# async def fillGreyList(GREYLIST, GREYGUILDS):
+#     GREYLIST = "["
+#     TERMDB = await MDB['greylist'].find({}).to_list(length=None)
+#     guildList = []
+#     for x in TERMDB:
+#         if x['guild'] not in guildList:
+#             guildList.append(x['guild'])
+#     for y in guildList:
+#         guildTermList = []
+#         for x in TERMDB:
+#             if y == x['guild']:
+#                 guildTermList.append(x['term'])
+#         termList = ""
+#         for x in guildTermList:
+#             termList += f'"{x}",'
+#         termList = termList[:-1]
+#         guildTerms = '{"guild":' + str(y) + ',"terms":[' + termList + ']},'
+#         GREYLIST += guildTerms
+#     GREYLIST = GREYLIST[:-1]
+#     GREYLIST += "]"
+#     GREYLIST = json.loads(GREYLIST)
+#     for x in GREYLIST:
+#         GREYGUILDS.append(x['guild'])
+#     return GREYLIST, GREYGUILDS
 
 
 CLEANER = [496672117384019969, 280892074247716864, 790322087981744128]

@@ -114,8 +114,8 @@ async def fillGlobals():
     # TERMDB = await GG.MDB['blacklist'].find({}).to_list(length=None)
     # GG.TERMS = [int(i['guild']) for i in TERMDB]
 
-    GREYDB = await GG.MDB['greylist'].find({}).to_list(length=None)
-    GG.GREYS = [int(i['guild']) for i in GREYDB]
+    # GREYDB = await GG.MDB['greylist'].find({}).to_list(length=None)
+    # GG.GREYS = [int(i['guild']) for i in GREYDB]
 
     REACTIONROLESDB = await GG.MDB['reactionroles'].find({}).to_list(length=None)
     GG.REACTIONROLES = GG.loadReactionRoles(REACTIONROLESDB)
@@ -124,7 +124,7 @@ async def fillGlobals():
     GG.STARBOARDS = GG.loadStarboards(STARBOARDDB)
 
     # GG.BLACKLIST, GG.GUILDS = await GG.fillBlackList(GG.BLACKLIST, GG.GUILDS)
-    GG.GREYLIST, GG.GREYGUILDS = await GG.fillGreyList(GG.GREYLIST, GG.GREYGUILDS)
+    # GG.GREYLIST, GG.GREYGUILDS = await GG.fillGreyList(GG.GREYLIST, GG.GREYGUILDS)
     log.info("Finished Filling Globals")
 
 
