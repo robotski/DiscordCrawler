@@ -18,7 +18,7 @@ class Purge(commands.Cog):
     @commands.guild_only()
     @commands.bot_has_permissions(manage_messages=True)
     async def purge(self, ctx, limit):
-        if GG.checkPermission(ctx, "mm"):
+        if GG.check_permission(ctx, "mm"):
             try:
                 if isinstance(int(limit), int):
                     await ctx.message.delete()

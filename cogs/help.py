@@ -15,7 +15,7 @@ class Help(commands.Cog):
 
     @commands.command(name="help")
     async def help(self, ctx):
-        if GG.checkPermission(ctx, "ar"):
+        if GG.check_permission(ctx, "ar"):
             embed = self.helpCommand(ctx)
             message = await ctx.send(embed=embed)
             await message.add_reaction('💬')
@@ -187,7 +187,7 @@ class Help(commands.Cog):
     @commands.command(name="staff")
     @GG.is_staff()
     async def staff(self, ctx):
-        if GG.checkPermission(ctx, "ar"):
+        if GG.check_permission(ctx, "ar"):
             embed = self.staffCommand(ctx)
             message = await ctx.send(embed=embed)
             await message.add_reaction('📊')  # Poll

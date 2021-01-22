@@ -11,35 +11,6 @@ from utils import logger
 
 log = logger.logger
 
-VERIFLEVELS = {VL.none: "None", VL.low: "Low", VL.medium: "Medium", VL.high: "(╯°□°）╯︵  ┻━┻",
-               VL.extreme: "┻━┻ミヽ(ಠ益ಠ)ノ彡┻━┻"}
-REGION = {VR.brazil: ":flag_br: Brazil",
-          VR.eu_central: ":flag_eu: Central Europe",
-          VR.singapore: ":flag_sg: Singapore",
-          VR.us_central: ":flag_us: U.S. Central",
-          VR.sydney: ":flag_au: Sydney",
-          VR.us_east: ":flag_us: U.S. East",
-          VR.us_south: ":flag_us: U.S. South",
-          VR.us_west: ":flag_us: U.S. West",
-          VR.eu_west: ":flag_eu: Western Europe",
-          VR.vip_us_east: ":flag_us: VIP U.S. East",
-          VR.vip_us_west: ":flag_us: VIP U.S. West",
-          VR.vip_amsterdam: ":flag_nl: VIP Amsterdam",
-          VR.london: ":flag_gb: London",
-          VR.amsterdam: ":flag_nl: Amsterdam",
-          VR.frankfurt: ":flag_de: Frankfurt",
-          VR.hongkong: ":flag_hk: Hong Kong",
-          VR.russia: ":flag_ru: Russia",
-          VR.japan: ":flag_jp: Japan",
-          VR.southafrica: ":flag_za:  South Africa"}
-
-
-def checkDays(date):
-    now = date.fromtimestamp(time.time())
-    diff = now - date
-    days = diff.days
-    return f"{days} {'day' if days == 1 else 'days'} ago"
-
 
 class Info(commands.Cog):
     def __init__(self, bot):
@@ -62,13 +33,13 @@ class Info(commands.Cog):
         embed.add_field(name="Name", value=ctx.guild.name)
         embed.add_field(name="ID", value=ctx.guild.id)
         embed.add_field(name="Owner", value=f"{ctx.guild.owner.name}#{ctx.guild.owner.discriminator}")
-        embed.add_field(name="Region", value=REGION[ctx.guild.region])
+        embed.add_field(name="Region", value=GG.REGION[ctx.guild.region])
         embed.add_field(name="Total | Humans | Bots", value=f"{len(ctx.guild.members)} | {len(HUMANS)} | {len(BOTS)}")
-        embed.add_field(name="Verification Level", value=VERIFLEVELS[ctx.guild.verification_level])
-        text, voice = GG.countChannels(ctx.guild.channels)
+        embed.add_field(name="Verification Level", value=GG.V_LEVELS[ctx.guild.verification_level])
+        text, voice = GG.count_channels(ctx.guild.channels)
         embed.add_field(name="Text Channels", value=str(text))
         embed.add_field(name="Voice Channels", value=str(voice))
-        embed.add_field(name="Creation Date", value=f"{ctx.guild.created_at}\n{checkDays(ctx.guild.created_at)}")
+        embed.add_field(name="Creation Date", value=f"{ctx.guild.created_at}\n{GG.check_days(ctx.guild.created_at)}")
         embed.set_thumbnail(url=ctx.guild.icon_url)
         await ctx.send(embed=embed)
 
@@ -88,7 +59,7 @@ class Info(commands.Cog):
         totalText = 0
         totalVoice = 0
         for g in ctx.bot.guilds:
-            text, voice = GG.countChannels(g.channels)
+            text, voice = GG.count_channels(g.channels)
             totalText += text
             totalVoice += voice
         em.add_field(name='Text Channels', value=f"{totalText}")

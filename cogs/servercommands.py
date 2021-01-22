@@ -90,7 +90,7 @@ class ServerCommands(commands.Cog):
     @commands.guild_only()
     async def addchannel(self, ctx, TYPE: str, channel: discord.TextChannel):
         """[STAFF ONLY]"""
-        if GG.checkPermission(ctx, "mm"):
+        if GG.check_permission(ctx, "mm"):
             TYPE = TYPE.upper()
             if TYPE in categories:
                 channelExists = await GG.MDB['channelinfo'].find_one({"channel": channel.id})

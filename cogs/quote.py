@@ -1,23 +1,62 @@
 import datetime
 import re
+import traceback
 from datetime import datetime
 
 import discord
 from discord.ext import commands
 
-import utils.globals as GG
-from models.quote_entry import QuoteModel, QuoteType, getQuoteEmbed
+import utils.globals as gg
+from models.quote_entry import QuoteModel, QuoteType, get_quote_embed
 from utils import logger
 
 log = logger.logger
 
 
 async def get_next_quote_num():
-    quoteNum = await GG.MDB['properties'].find_one({'key': 'quoteId'})
-    num = quoteNum['amount'] + 1
-    quoteNum['amount'] += 1
-    await GG.MDB['properties'].replace_one({"key": 'quoteId'}, quoteNum)
+    quote_num = await gg.MDB['properties'].find_one({'key': 'quoteId'})
+    num = quote_num['amount'] + 1
+    quote_num['amount'] += 1
+    await gg.MDB['properties'].replace_one({"key": 'quoteId'}, quote_num)
     return num
+
+
+async def save_quote(ctx, member_db, message, quote_id):
+    async with ctx.channel.typing():
+        member_list = []
+        line_list = []
+        curr = [[word for word in line.split(": ", 1)] for line in message.splitlines()]
+        for line in curr:
+            try:
+                member = (await ctx.guild.query_members(line[0]))
+                if len(member) != 0:
+                    member_list.append(member[0].id)
+                else:
+                    member_list.append(line[0])
+                line_list.append(line[1])
+            except Exception as e:
+                log.error(traceback.format_exc())
+                del member_list[-1]
+                if len(member_list) != len(line_list):
+                    del line_list[-1]
+                member_list.append(None)
+                line_list.append(line[0])
+        quote = QuoteModel(quote_id, QuoteType.OLD, line_list, ctx.message.created_at, member_list, ctx.author.id)
+        await gg.MDB.quote.insert_one(quote.to_dict())
+        await gg.MDB.members.update_one({"server": ctx.guild.id, "user": ctx.author.id}, {"$set": member_db},
+                                        upsert=True)
+        embed = await get_quote_embed(ctx, quote)
+        await ctx.send(embed=embed)
+
+
+async def quote_db(ctx):
+    member_db = await gg.MDB.members.find_one({"server": ctx.guild.id, "user": ctx.author.id})
+    quote_id = await get_next_quote_num()
+    if member_db is None:
+        member_db = {"server": ctx.guild.id, "user": ctx.author.id, "quoteIds": [quote_id]}
+    else:
+        member_db['quoteIds'].append(quote_id)
+    return member_db, quote_id
 
 
 class Quote(commands.Cog):
@@ -28,7 +67,7 @@ class Quote(commands.Cog):
     @commands.Cog.listener()
     async def on_raw_reaction_remove(self, payload: discord.RawReactionActionEvent) -> None:
         user = payload.user_id
-        if user not in GG.RECORDERS:
+        if user not in gg.RECORDERS:
             return
         if str(payload.emoji) == '📝':
             msg = await self.bot.get_channel(id=payload.channel_id).fetch_message(id=payload.message_id)
@@ -40,39 +79,39 @@ class Quote(commands.Cog):
     async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent) -> None:
         user = payload.user_id
         message = payload.message_id
-        if user not in GG.RECORDERS:
+        if user not in gg.RECORDERS:
             return
-        if GG.RECORDERS[user].id == message:
+        if gg.RECORDERS[user].id == message:
             if str(payload.emoji) == '❌':
                 channel: discord.TextChannel = self.bot.get_channel(id=payload.channel_id)
-                await GG.RECORDERS[user].delete()
+                await gg.RECORDERS[user].delete()
                 await channel.send("Canceled!")
-                del GG.RECORDERS[user]
+                del gg.RECORDERS[user]
                 del self.active_quote[user]
                 return
             channel = self.bot.get_channel(id=payload.channel_id)
-            ctx: discord.Message = GG.RECORDERS[user]
+            ctx: discord.Message = gg.RECORDERS[user]
 
             if len(self.active_quote[user][0]) == 0:
                 await channel.send(f"<@{user}> You didn't select any messages!")
                 return
 
-            memberDB = await GG.MDB.members.find_one({"server": payload.guild_id, "user": user})
-            quoteId = await get_next_quote_num()
+            member = await gg.MDB.members.find_one({"server": payload.guild_id, "user": user})
+            quote_id = await get_next_quote_num()
 
-            if memberDB is None:
-                memberDB = {"server": payload.guild_id, "user": user, "quoteIds": [quoteId]}
+            if member is None:
+                member = {"server": payload.guild_id, "user": user, "quoteIds": [quote_id]}
             else:
-                memberDB['quoteIds'].append(quoteId)
+                member['quoteIds'].append(quote_id)
 
-            quote = QuoteModel(quoteId, QuoteType.NEW, self.active_quote[user][1], ctx.created_at,
+            quote = QuoteModel(quote_id, QuoteType.NEW, self.active_quote[user][1], ctx.created_at,
                                self.active_quote[user][0], user)
-            await GG.MDB.quote.insert_one(quote.to_dict())
-            await GG.MDB.members.update_one({"server": payload.guild_id, "user": user}, {"$set": memberDB}, upsert=True)
-            embed = await getQuoteEmbed(ctx, quote)
-            await GG.RECORDERS[user].delete()
+            await gg.MDB.quote.insert_one(quote.to_dict())
+            await gg.MDB.members.update_one({"server": payload.guild_id, "user": user}, {"$set": member}, upsert=True)
+            embed = await get_quote_embed(ctx, quote)
+            await gg.RECORDERS[user].delete()
             await channel.send(embed=embed)
-            del GG.RECORDERS[user]
+            del gg.RECORDERS[user]
             del self.active_quote[user]
         if str(payload.emoji) == '📝':
             if user not in self.active_quote:
@@ -82,110 +121,72 @@ class Quote(commands.Cog):
             self.active_quote[user][0].append(member)
             self.active_quote[user][1].append(line)
 
-    @commands.command(aliases=['qa', 'aq'])
+    @commands.command(name="quoteadd", aliases=['qa', 'aq', 'addquote'])
     @commands.guild_only()
-    async def quoteadd(self, ctx: commands.Context, *, quote: str = None):
+    async def quote_add(self, ctx: commands.Context, *, quote: str = None):
         if quote:
-            memberDB = await GG.MDB.members.find_one({"server": ctx.guild.id, "user": ctx.author.id})
-            quoteId = await get_next_quote_num()
+            member_db, quote_id = await quote_db(ctx)
 
-            if memberDB is None:
-                memberDB = {"server": ctx.guild.id, "user": ctx.author.id, "quoteIds": [quoteId]}
-            else:
-                memberDB['quoteIds'].append(quoteId)
-
-            await self.save_quote(ctx, memberDB, quote, quoteId)
+            await save_quote(ctx, member_db, quote, quote_id)
             return
 
-        if ctx.author.id in GG.RECORDERS:
-            message = GG.RECORDERS[ctx.author.id]
+        if ctx.author.id in gg.RECORDERS:
+            message = gg.RECORDERS[ctx.author.id]
             await ctx.send(embed=discord.Embed(
                 description="You already have an active recorder [here]({link})".format(link=message.jump_url)))
             return
         message: discord.Message = await ctx.send(
             "Now recording. React to messages with 📝 to save them. Click ✅ to finish or ❌ to cancel.")
-        GG.RECORDERS[ctx.author.id] = message
+        gg.RECORDERS[ctx.author.id] = message
         if ctx.author.id not in self.active_quote:
             self.active_quote[ctx.author.id] = [[], []]
         await message.add_reaction('✅')
         await message.add_reaction('❌')
 
-    @commands.command(aliases=['oqa'])
+    @commands.command(name="oldquoteadd", aliases=['oqa', 'oaq', 'oldaddquote'])
     @commands.guild_only()
-    async def oldquoteadd(self, ctx: commands.Context, *, quote: str = None):
+    async def old_quote_add(self, ctx: commands.Context, *, quote: str = None):
         def check(ms):
             return ctx.message.channel and ms.author == ctx.message.author
 
-        memberDB = await GG.MDB.members.find_one({"server": ctx.guild.id, "user": ctx.author.id})
-        quoteId = await get_next_quote_num()
-
-        if memberDB is None:
-            memberDB = {"server": ctx.guild.id, "user": ctx.author.id, "quoteIds": [quoteId]}
-        else:
-            memberDB['quoteIds'].append(quoteId)
+        member_db, quote_id = await quote_db(ctx)
 
         if quote:
-            await self.save_quote(ctx, memberDB, quote, quoteId)
+            await save_quote(ctx, member_db, quote, quote_id)
             return
 
         await ctx.send("What would you like the quote to be?")
         message = await self.bot.wait_for('message', check=check)
 
-        await self.save_quote(ctx, memberDB, message.clean_content, quoteId)
-
-    async def save_quote(self, ctx, memberDB, message, quoteId):
-        async with ctx.channel.typing():
-            member_list = []
-            line_list = []
-            curr = [[word for word in line.split(": ", 1)] for line in message.splitlines()]
-            for line in curr:
-                try:
-                    member = (await ctx.guild.query_members(line[0]))
-                    if len(member) != 0:
-                        member_list.append(member[0].id)
-                    else:
-                        member_list.append(line[0])
-                    line_list.append(line[1])
-                except:
-                    del member_list[-1]
-                    if len(member_list) != len(line_list):
-                        del line_list[-1]
-                    member_list.append(None)
-                    line_list.append(line[0])
-            quote = QuoteModel(quoteId, QuoteType.OLD, line_list, ctx.message.created_at, member_list, ctx.author.id)
-            await GG.MDB.quote.insert_one(quote.to_dict())
-            await GG.MDB.members.update_one({"server": ctx.guild.id, "user": ctx.author.id}, {"$set": memberDB},
-                                            upsert=True)
-            embed = await getQuoteEmbed(ctx, quote)
-            await ctx.send(embed=embed)
+        await save_quote(ctx, member_db, message.clean_content, quote_id)
 
     @commands.command(aliases=['q'])
     @commands.guild_only()
-    async def quote(self, ctx, msgId: int = None, *, reply=None):
-        if msgId is None:
+    async def quote(self, ctx, msg_id: int = None):
+        if msg_id is None:
             async with ctx.channel.typing():
-                quote = QuoteModel.from_data(await GG.MDB.quote.aggregate([{'$sample': {'size': 1}}]).next())
-                embed = await getQuoteEmbed(ctx, quote)
+                quote = QuoteModel.from_data(await gg.MDB.quote.aggregate([{'$sample': {'size': 1}}]).next())
+                embed = await get_quote_embed(ctx, quote)
                 await ctx.send(embed=embed)
                 return
 
-        if not isinstance(msgId, int):
+        if not isinstance(msg_id, int):
             await ctx.send(content=":x:" + " **I work only with quote IDs.**")
             return
 
-        if msgId > 0:
-            value = await GG.MDB.quote.find_one({"quoteId": msgId})
-        elif msgId == 0:
-            await ctx.send(
-                content=":x:" + ' **Quote selection has been reworked. -1 is the most recent, -2 is the second most, and so on.**')
+        if msg_id > 0:
+            value = await gg.MDB.quote.find_one({"quoteId": msg_id})
+        elif msg_id == 0:
+            await ctx.send(content=":x:" + " **Quote selection has been reworked. -1 is the most recent, "
+                                           "-2 is the second most, and so on.**")
             return
         else:
-            value = await GG.MDB.quote.find().sort([("_id", -1)]).limit(-msgId).skip(-msgId - 1).next()
+            value = await gg.MDB.quote.find().sort([("_id", -1)]).limit(-msg_id).skip(-msg_id - 1).next()
         if value is None:
             await ctx.send(content=":x:" + ' **Could not find the specified message.**')
             return
         quote = QuoteModel.from_data(value)
-        embed = await getQuoteEmbed(ctx, quote)
+        embed = await get_quote_embed(ctx, quote)
         await ctx.send(embed=embed)
         return
 
