@@ -13,17 +13,19 @@ class QuoteType(IntEnum):
 
 class QuoteModel:
     def __init__(self, quote_id: int, quote_type: QuoteType, message: List[str], date: datetime,
-                 author: List[Union[int, str]], submitter: int):
+                 author: List[Union[int, str]], submitter: int, jump_url: discord.Message.jump_url = None):
         self.quoteId = quote_id
         self.quoteType = quote_type
         self.message = message
         self.date = date
         self.author = author
         self.submitter = submitter
+        self.jump_url = jump_url
 
     @classmethod
     def from_data(cls, data):
-        return cls(data['quoteId'], data['quoteType'], data['message'], data['date'], data['author'], data['submitter'])
+        return cls(data['quoteId'], data['quoteType'], data['message'], data['date'], data['author'], data['submitter'],
+                   data['jump_url'])
 
     def to_dict(self):
         return {
@@ -32,7 +34,8 @@ class QuoteModel:
             'message': self.message,
             'date': self.date,
             'author': self.author,
-            'submitter': self.submitter
+            'submitter': self.submitter,
+            'jump_url': self.jump_url
         }
 
 
@@ -50,6 +53,7 @@ async def get_quote_embed(ctx, quote: QuoteModel):
     for i in range(len(quote.message)):
         author = quote.author[i]
         message = quote.message[i]
+        jump_url = quote.jump_url[i]
         if message == "":
             continue
         if author is None:
@@ -57,7 +61,10 @@ async def get_quote_embed(ctx, quote: QuoteModel):
         else:
             if isinstance(author, int):
                 author = ctx.guild.get_member(author).display_name
-            embed.add_field(name=f"{author}:", value=f"{message}", inline=False)
+            if jump_url is None:
+                embed.add_field(name=f"{author}:", value=f"{message}", inline=False)
+            else:
+                embed.add_field(name=f"{author}:", value=f"{message}\n[Link]({jump_url})", inline=False)
 
     embed.set_footer(text=f"Quote ID: {quote.quoteId} - Added by {submitter.display_name}")
     embed.timestamp = quote.date

@@ -41,7 +41,8 @@ async def save_quote(ctx, member_db, message, quote_id):
                     del line_list[-1]
                 member_list.append(None)
                 line_list.append(line[0])
-        quote = QuoteModel(quote_id, QuoteType.OLD, line_list, ctx.message.created_at, member_list, ctx.author.id)
+        quote = QuoteModel(quote_id, QuoteType.OLD, line_list, ctx.message.created_at, member_list, ctx.author.id,
+                           [None] * len(line_list))
         await gg.MDB.quote.insert_one(quote.to_dict())
         await gg.MDB.members.update_one({"server": ctx.guild.id, "user": ctx.author.id}, {"$set": member_db},
                                         upsert=True)
@@ -63,6 +64,7 @@ class Quote(commands.Cog):
     def __init__(self, bot: discord.ext.commands.Bot):
         self.bot: discord.ext.commands.Bot = bot
         self.active_quote = {}
+        self.msg_id_list = {}
 
     @commands.Cog.listener()
     async def on_raw_reaction_remove(self, payload: discord.RawReactionActionEvent) -> None:
@@ -74,6 +76,7 @@ class Quote(commands.Cog):
             index = self.active_quote[user][1].index(msg.clean_content)
             del self.active_quote[user][0][index]
             del self.active_quote[user][1][index]
+            del self.active_quote[user][2][index]
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent) -> None:
@@ -81,6 +84,7 @@ class Quote(commands.Cog):
         message = payload.message_id
         if user not in gg.RECORDERS:
             return
+
         if gg.RECORDERS[user].id == message:
             if str(payload.emoji) == '❌':
                 channel: discord.TextChannel = self.bot.get_channel(id=payload.channel_id)
@@ -89,6 +93,7 @@ class Quote(commands.Cog):
                 del gg.RECORDERS[user]
                 del self.active_quote[user]
                 return
+
             channel = self.bot.get_channel(id=payload.channel_id)
             ctx: discord.Message = gg.RECORDERS[user]
 
@@ -96,30 +101,67 @@ class Quote(commands.Cog):
                 await channel.send(f"<@{user}> You didn't select any messages!")
                 return
 
-            member = await gg.MDB.members.find_one({"server": payload.guild_id, "user": user})
+            member_db = await gg.MDB.members.find_one({"server": payload.guild_id, "user": user})
             quote_id = await get_next_quote_num()
 
-            if member is None:
-                member = {"server": payload.guild_id, "user": user, "quoteIds": [quote_id]}
+            if member_db is None:
+                member_db = {"server": payload.guild_id, "user": user, "quoteIds": [quote_id]}
             else:
-                member['quoteIds'].append(quote_id)
+                member_db['quoteIds'].append(quote_id)
 
             quote = QuoteModel(quote_id, QuoteType.NEW, self.active_quote[user][1], ctx.created_at,
-                               self.active_quote[user][0], user)
+                               self.active_quote[user][0], user, self.active_quote[user][2])
             await gg.MDB.quote.insert_one(quote.to_dict())
-            await gg.MDB.members.update_one({"server": payload.guild_id, "user": user}, {"$set": member}, upsert=True)
+            await gg.MDB.members.update_one({"server": payload.guild_id, "user": user}, {"$set": member_db}, upsert=True)
             embed = await get_quote_embed(ctx, quote)
             await gg.RECORDERS[user].delete()
             await channel.send(embed=embed)
             del gg.RECORDERS[user]
             del self.active_quote[user]
+
+            member = await self.bot.fetch_user(user)
+
+            remove_channel = await self.channel_scan(ctx, user, self.msg_id_list[user][0])
+
+            for msg_id in self.msg_id_list[user]:
+                try:
+                    to_remove = await remove_channel.fetch_message(msg_id)
+                    await to_remove.remove_reaction('📝', member)
+                except discord.errors.NotFound:
+                    remove_channel = await self.channel_scan(ctx, user, msg_id)
+                    to_remove = await remove_channel.fetch_message(msg_id)
+                    await to_remove.remove_reaction('📝', member)
+
+            del self.msg_id_list[user]
+
         if str(payload.emoji) == '📝':
             if user not in self.active_quote:
-                self.active_quote[user] = [[], []]
+                self.active_quote[user] = [[], [], []]
+            if user not in self.msg_id_list:
+                self.msg_id_list[user] = []
             msg = await self.bot.get_channel(id=payload.channel_id).fetch_message(id=payload.message_id)
-            member, line = msg.author.id, msg.clean_content
-            self.active_quote[user][0].append(member)
+            member_db, line, jump_url = msg.author.id, msg.clean_content, msg.jump_url
+            self.active_quote[user][0].append(member_db)
             self.active_quote[user][1].append(line)
+            self.active_quote[user][2].append(jump_url)
+            self.msg_id_list[user].append(msg.id)
+
+    async def channel_scan(self, ctx, user, message):
+        try:
+            remove_channel = ctx.channel
+            to_remove = await ctx.channel.fetch_message(message)
+        except (ValueError, Exception):
+            for remove_channel in ctx.guild.text_channels:
+                perms = ctx.guild.me.permissions_in(remove_channel)
+                if remove_channel == ctx.channel or not perms.read_messages or not perms.read_message_history:
+                    continue
+                try:
+                    to_remove = await remove_channel.fetch_message(message)
+                except (ValueError, Exception):
+                    continue
+                else:
+                    break
+        return remove_channel
 
     @commands.command(name="quoteadd", aliases=['qa', 'aq', 'addquote'])
     @commands.guild_only()
@@ -139,7 +181,7 @@ class Quote(commands.Cog):
             "Now recording. React to messages with 📝 to save them. Click ✅ to finish or ❌ to cancel.")
         gg.RECORDERS[ctx.author.id] = message
         if ctx.author.id not in self.active_quote:
-            self.active_quote[ctx.author.id] = [[], []]
+            self.active_quote[ctx.author.id] = [[], [], []]
         await message.add_reaction('✅')
         await message.add_reaction('❌')
 

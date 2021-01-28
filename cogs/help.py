@@ -9,6 +9,35 @@ from utils import logger
 log = logger.logger
 
 
+def helpCommand(ctx):
+    embed = GG.EmbedWithAuthor(ctx)
+    embed.title = "Help command with clickable categories."
+    embed.add_field(name='💬', value='Quote')
+    embed.add_field(name='💭', value='Personal Quotes')
+    embed.add_field(name='📘', value='Dictionary')
+    embed.add_field(name='❗', value='Custom Sock Commands™')
+    embed.add_field(name='❓', value='Information')
+    if GG.is_staff_bool(ctx):
+        embed.add_field(name='🔒', value='Staff Commands')
+    embed.add_field(name='📔', value='This help message')
+    embed.add_field(name='❌', value='Deletes this message')
+    embed.set_footer(text='These reactions are available for 60 seconds, afterwards it will stop responding.')
+    return embed
+
+
+def staffCommand(ctx):
+    embed = GG.EmbedWithAuthor(ctx)
+    embed.title = "Staff commands with clickable categories. You need to be either Owner of the server. Have " \
+                  "Administration permissions, or have been added with the addstaff (📖) command. "
+    embed.add_field(name='📊', value='Poll')
+    embed.add_field(name='📖', value='Server commands')
+    embed.add_field(name='📝', value='Server quotes')
+    embed.add_field(name='📔', value='This help message')
+    embed.add_field(name='❌', value='Deletes this message')
+    embed.set_footer(text='These reactions are available for 60 seconds, afterwards it will stop responding.')
+    return embed
+
+
 class Help(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -16,7 +45,7 @@ class Help(commands.Cog):
     @commands.command(name="help")
     async def help(self, ctx):
         if GG.check_permission(ctx, "ar"):
-            embed = self.helpCommand(ctx)
+            embed = helpCommand(ctx)
             message = await ctx.send(embed=embed)
             await message.add_reaction('💬')
             await message.add_reaction('💭')
@@ -63,12 +92,11 @@ class Help(commands.Cog):
                 embed = self.sockCommand(ctx)
             if str(reaction.emoji) == '🔒':
                 if GG.is_staff_bool(ctx):
-                    embed = self.staffCommand(ctx)
+                    embed = staffCommand(ctx)
                     await message.clear_reactions()
                     await message.add_reaction('📊')  # Poll
                     await message.add_reaction('📖')  # Server commands
                     await message.add_reaction('📝')  # Server quotes
-                    # await message.add_reaction('🔇')  # Mute
                     await message.add_reaction('📔')
                     await message.add_reaction('❌')
 
@@ -76,11 +104,9 @@ class Help(commands.Cog):
                 else:
                     pass
             if str(reaction.emoji) == '📔':
-                embed = self.helpCommand(ctx)
+                embed = helpCommand(ctx)
             if str(reaction.emoji) == '❌':
                 await message.delete()
-                # if not isinstance(message.channel, discord.DMChannel):
-                    # await ctx.message.delete()
             if embed is not None:
                 await message.edit(embed=embed)
                 if not isinstance(message.channel, discord.DMChannel):
@@ -90,21 +116,6 @@ class Help(commands.Cog):
                 else:
                     await self.waitChangeMessage(ctx, message)
 
-    def helpCommand(self, ctx):
-        embed = GG.EmbedWithAuthor(ctx)
-        embed.title = "Help command with clickable categories."
-        embed.add_field(name='💬', value='Quote')
-        embed.add_field(name='💭', value='Personal Quotes')
-        embed.add_field(name='📘', value='Dictionary')
-        embed.add_field(name='❗', value='Custom Sock Commands™')
-        embed.add_field(name='❓', value='Information')
-        if GG.is_staff_bool(ctx):
-            embed.add_field(name='🔒', value='Staff Commands')
-        embed.add_field(name='📔', value='This help message')
-        embed.add_field(name='❌', value='Deletes this message')
-        embed.set_footer(text='These reactions are available for 60 seconds, afterwards it will stop responding.')
-        return embed
-
     def quoteCommand(self, ctx):
         embed = GG.EmbedWithAuthor(ctx)
         embed.title = "Quoting of other people."
@@ -112,8 +123,7 @@ class Help(commands.Cog):
                         value=f"``{self.bot.get_server_prefix(ctx.message)}[quote|q] [msgId] [reply]``\nAllows you to quote someone else, anywhere in the server.",
                         inline=False)
         embed.set_footer(
-            text='These reactions are available for 60 seconds, afterwards it will stop responding.\n📔 Returns to '
-                 'the main menu.\n❌ Deletes this message from chat.')
+            text='These reactions are available for 60 seconds, afterwards it will stop responding.\n📔 Returns to ''the main menu.\n❌ Deletes this message from chat.')
         return embed
 
     def dictCommand(self, ctx):
@@ -123,20 +133,26 @@ class Help(commands.Cog):
                         value=f"``{self.bot.get_server_prefix(ctx.message)}[dictionary|dict|define] [term]``\nLooks up the definition of a word.",
                         inline=False)
         embed.set_footer(
-            text='These reactions are available for 60 seconds, afterwards it will stop responding.\n📔 Returns to '
-                 'the main menu.\n❌ Deletes this message from chat.')
+            text='These reactions are available for 60 seconds, afterwards it will stop responding.\n📔 Returns to ''the main menu.\n❌ Deletes this message from chat.')
         return embed
 
     def sockCommand(self, ctx: commands.Context) -> discord.Embed:
         embed = GG.EmbedWithAuthor(ctx)
         embed.title = "Special custom Sock commands."
-        embed.add_field(name="remindme", value=f"``{self.bot.get_server_prefix(ctx.message)}remindme``\nSends you the message you want when the time is up.", inline=False)
-        embed.add_field(name="forgetme", value=f"``{self.bot.get_server_prefix(ctx.message)}forgetme``\nRemoves all your upcoming notifications.", inline=False)
-        embed.add_field(name="addStarboard", value=f"``{self.bot.get_server_prefix(ctx.message)}addStarboard``\n(STAFF ONLY)", inline=False)
-        embed.add_field(name="removeStarboard", value=f"``{self.bot.get_server_prefix(ctx.message)}removeStarboard``\n(STAFF ONLY)", inline=False)
-        embed.set_footer(text='These reactions are available for 60 seconds, afterwards it will stop responding.\n📔 Returns to ' 'the main menu.\n❌ Deletes this message from chat.')
+        embed.add_field(name="remindme",
+                        value=f"``{self.bot.get_server_prefix(ctx.message)}remindme``\nSends you the message you want when the time is up.",
+                        inline=False)
+        embed.add_field(name="forgetme",
+                        value=f"``{self.bot.get_server_prefix(ctx.message)}forgetme``\nRemoves all your upcoming notifications.",
+                        inline=False)
+        embed.add_field(name="addStarboard",
+                        value=f"``{self.bot.get_server_prefix(ctx.message)}addStarboard``\n(STAFF ONLY)", inline=False)
+        embed.add_field(name="removeStarboard",
+                        value=f"``{self.bot.get_server_prefix(ctx.message)}removeStarboard``\n(STAFF ONLY)",
+                        inline=False)
+        embed.set_footer(
+            text='These reactions are available for 60 seconds, afterwards it will stop responding.\n📔 Returns to ' 'the main menu.\n❌ Deletes this message from chat.')
         return embed
-
 
     def infoCommand(self, ctx):
         embed = GG.EmbedWithAuthor(ctx)
@@ -157,8 +173,7 @@ class Help(commands.Cog):
                         value=f"``{self.bot.get_server_prefix(ctx.message)}oldhelp``\nShows you the old help command (the one in a giant embed).",
                         inline=False)
         embed.set_footer(
-            text='These reactions are available for 60 seconds, afterwards it will stop responding.\n📔 Returns to '
-                 'the main menu.\n❌ Deletes this message from chat.')
+            text='These reactions are available for 60 seconds, afterwards it will stop responding.\n📔 Returns to ''the main menu.\n❌ Deletes this message from chat.')
         return embed
 
     def personalCommand(self, ctx):
@@ -180,20 +195,18 @@ class Help(commands.Cog):
                         value=f'``{self.bot.get_server_prefix(ctx.message)}[personalclear|pclear]``\nDeletes **ALL** your personal quotes.',
                         inline=False)
         embed.set_footer(
-            text='These reactions are available for 60 seconds, afterwards it will stop responding.\n📔 Returns to '
-                 'the main menu.\n❌ Deletes this message from chat.')
+            text='These reactions are available for 60 seconds, afterwards it will stop responding.\n📔 Returns to ''the main menu.\n❌ Deletes this message from chat.')
         return embed
 
     @commands.command(name="staff")
     @GG.is_staff()
     async def staff(self, ctx):
         if GG.check_permission(ctx, "ar"):
-            embed = self.staffCommand(ctx)
+            embed = staffCommand(ctx)
             message = await ctx.send(embed=embed)
             await message.add_reaction('📊')  # Poll
             await message.add_reaction('📖')  # Server commands
             await message.add_reaction('📝')  # Server quotes
-            # await message.add_reaction('🔇')  # Mute
             await message.add_reaction('📔')
             await message.add_reaction('❌')
 
@@ -208,7 +221,6 @@ class Help(commands.Cog):
                    (user == ctx.message.author and str(reaction.emoji) == '📝') or \
                    (user == ctx.message.author and str(reaction.emoji) == '📔') or \
                    (user == ctx.message.author and str(reaction.emoji) == '❌')
-            # (user == ctx.message.author and str(reaction.emoji) == '🔇') or \
 
         try:
             reaction, user = await ctx.bot.wait_for('reaction_add', timeout=60.0, check=check)
@@ -222,33 +234,16 @@ class Help(commands.Cog):
             if str(reaction.emoji) == '📖':
                 embed = self.serverCommand(ctx)
             if str(reaction.emoji) == '📔':
-                embed = self.staffCommand(ctx)
-            # if str(reaction.emoji) == '🔇':
-            #     embed = self.muteCommand(ctx)
+                embed = staffCommand(ctx)
             if str(reaction.emoji) == '📝':
                 embed = self.serverQuoteCommand(ctx)
             if str(reaction.emoji) == '❌':
                 await message.delete()
-                # if not isinstance(message.channel, discord.DMChannel):
-                    # await ctx.message.delete()
             if embed is not None:
                 await message.edit(embed=embed)
                 if not isinstance(message.channel, discord.DMChannel):
                     await reaction.remove(user)
                 await self.waitStaffChangeMessage(ctx, message)
-
-    def staffCommand(self, ctx):
-        embed = GG.EmbedWithAuthor(ctx)
-        embed.title = "Staff commands with clickable categories. You need to be either Owner of the server. Have " \
-                      "Administration permissions, or have been added with the addstaff (📖) command. "
-        embed.add_field(name='📊', value='Poll')
-        embed.add_field(name='📖', value='Server commands')
-        embed.add_field(name='📝', value='Server quotes')
-        # embed.add_field(name='🔇', value='Mute')
-        embed.add_field(name='📔', value='This help message')
-        embed.add_field(name='❌', value='Deletes this message')
-        embed.set_footer(text='These reactions are available for 60 seconds, afterwards it will stop responding.')
-        return embed
 
     def pollCommand(self, ctx):
         embed = GG.EmbedWithAuthor(ctx)
@@ -256,13 +251,11 @@ class Help(commands.Cog):
         embed.add_field(name="poll option 1",
                         value=f"``{self.bot.get_server_prefix(ctx.message)}poll <text>``\nAdds 👍, 👎, 🤷‍ to your text, for questions that don't need specific answers.",
                         inline=False)
-        embed.add_field(name="poll option 2",
-                        value="``" + self.bot.get_server_prefix(
-                            ctx.message) + "poll {title} [answer1] [answer2] ... [answer20]``\nThis command can be used to create a poll with a specific title and specific answers. Note that this command supports up to 20 answers. and the {} around the title and [] around the answers are **required**",
+        embed.add_field(name="poll option 2", value="``" + self.bot.get_server_prefix(
+            ctx.message) + "poll {title} [answer1] [answer2] ... [answer20]``\nThis command can be used to create a poll with a specific title and specific answers. Note that this command supports up to 20 answers. and the {} around the title and [] around the answers are **required**",
                         inline=False)
         embed.set_footer(
-            text='These reactions are available for 60 seconds, afterwards it will stop responding.\n📔 Returns to '
-                 'the main menu.\n❌ Deletes this message from chat.')
+            text='These reactions are available for 60 seconds, afterwards it will stop responding.\n📔 Returns to ''the main menu.\n❌ Deletes this message from chat.')
         return embed
 
     def serverQuoteCommand(self, ctx):
@@ -281,8 +274,7 @@ class Help(commands.Cog):
                         value=f'``{self.bot.get_server_prefix(ctx.message)}[globallist|glist] [page_number=1]``\nReturns all server quotes.',
                         inline=False)
         embed.set_footer(
-            text='These reactions are available for 60 seconds, afterwards it will stop responding.\n📔 Returns to '
-                 'the main menu.\n❌ Deletes this message from chat.')
+            text='These reactions are available for 60 seconds, afterwards it will stop responding.\n📔 Returns to ''the main menu.\n❌ Deletes this message from chat.')
         return embed
 
     def serverCommand(self, ctx):
@@ -316,8 +308,7 @@ class Help(commands.Cog):
                         value=f"``{self.bot.get_server_prefix(ctx.message)}purge <amount>``\nPurges an x amount of messages, with a little warning.",
                         inline=False)
         embed.set_footer(
-            text='These reactions are available for 60 seconds, afterwards it will stop responding.\n📔 Returns to '
-                 'the main menu.\n❌ Deletes this message from chat.')
+            text='These reactions are available for 60 seconds, afterwards it will stop responding.\n📔 Returns to ''the main menu.\n❌ Deletes this message from chat.')
         return embed
 
 
