@@ -23,7 +23,8 @@ class Ban(commands.Cog):
     @GG.is_staff()
     async def tempban(self, ctx, member: typing.Optional[discord.Member], *, message):
         if member is None:
-            return await ctx.send("Member wasn't found.\n\nCheck the ID, it might not be a member.\nAlso you can't temp-ban someone who isn't on the server.")
+            return await ctx.send(
+                "Member wasn't found.\n\nCheck the ID, it might not be a member.\nAlso you can't temp-ban someone who isn't on the server.")
 
         memberDB = await GG.MDB.members.find_one({"server": ctx.guild.id, "user": member.id})
         caseId = await get_next_case_num()
@@ -42,7 +43,8 @@ class Ban(commands.Cog):
     @GG.is_staff()
     async def ban(self, ctx, member: typing.Optional[discord.Member], *, message):
         if member is None:
-            return await ctx.send("Member wasn't found.\n\nCheck the ID, it might not be a member.\nAlso you can't ban someone who isn't on the server.")
+            return await ctx.send(
+                "Member wasn't found.\n\nCheck the ID, it might not be a member.\nAlso you can't ban someone who isn't on the server.")
 
         memberDB = await GG.MDB.members.find_one({"server": ctx.guild.id, "user": member.id})
         caseId = await get_next_case_num()

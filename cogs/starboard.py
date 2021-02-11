@@ -330,6 +330,12 @@ class Starboard(commands.Cog):
                 starboard = s_board
         if not starboard:
             return
+        if not starboard.enabled:
+            return
+        if not await self._check_roles(starboard, member):
+            return
+        if not await self._check_channel(starboard, channel):
+            return
 
         star_channel = guild.get_channel(starboard.channel)
         if not star_channel:
