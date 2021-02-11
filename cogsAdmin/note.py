@@ -1,7 +1,5 @@
-import typing
 from datetime import datetime
 
-import discord
 from discord.ext import commands
 
 import utils.globals as GG
@@ -23,7 +21,8 @@ class Note(commands.Cog):
     @GG.is_staff()
     async def note(self, ctx, member: int, *, message):
         if ctx.guild.get_member(member) is None:
-            await ctx.send("Member wasn't found on the server. Inserting note as a general snowflake.\n\nPlease check if this is actually a member, it might be a channel/message id.")
+            await ctx.send(
+                "Member wasn't found on the server. Inserting note as a general snowflake.\n\nPlease check if this is actually a member, it might be a channel/message id.")
 
         memberDB = await GG.MDB.members.find_one({"server": ctx.guild.id, "user": member})
         caseId = await get_next_case_num()
