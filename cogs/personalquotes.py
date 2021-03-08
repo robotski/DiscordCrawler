@@ -63,14 +63,17 @@ class PersonalQuotes(commands.Cog):
             if checkIfExist is not None:
                 return await ctx.send(content=":x:" + ' **You already have a command with that trigger.**')
             else:
-                await GG.MDB['personalcommands'].insert_one({"user": ctx.message.author.id, "trigger": trig, "response": response, "attachments": [attachment.url for attachment in ctx.message.attachments]})
+                await GG.MDB['personalcommands'].insert_one(
+                    {"user": ctx.message.author.id, "trigger": trig, "response": response,
+                     "attachments": [attachment.url for attachment in ctx.message.attachments]})
 
         await ctx.send(content=":white_check_mark:" + ' **Command added.**')
 
     @commands.command(aliases=['premove', 'prem'])
     async def personalremove(self, ctx, *, trigger):
         """Removes a personal quote."""
-        result = await GG.MDB['personalcommands'].delete_one({"user": ctx.message.author.id, "trigger": trigger.replace('\'', '\'\'')})
+        result = await GG.MDB['personalcommands'].delete_one(
+            {"user": ctx.message.author.id, "trigger": trigger.replace('\'', '\'\'')})
         if result.deleted_count > 0:
             await ctx.send(content=":white_check_mark:" + ' **Command deleted.**')
         else:

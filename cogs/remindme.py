@@ -1,11 +1,10 @@
 import asyncio
-import datetime
-
-import discord
 import time
 
-import utils.globals as GG
+import discord
 from discord.ext import commands
+
+import utils.globals as GG
 from utils import logger
 
 log = logger.logger
@@ -34,7 +33,7 @@ class RemindMe(commands.Cog):
             await ctx.send("Text is too long.")
             return
         seconds = self.units[time_unit] * quantity
-        future = int(time.time()+seconds)
+        future = int(time.time() + seconds)
         await GG.MDB['reminders'].insert_one({'ID': author.id, 'FUTURE': future, 'TEXT': text})
         log.info("{} ({}) set a reminder.".format(author.name, author.id))
         await ctx.send("I will remind you that in {} {}.".format(str(quantity), time_unit + s))

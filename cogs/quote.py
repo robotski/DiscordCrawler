@@ -112,7 +112,8 @@ class Quote(commands.Cog):
             quote = QuoteModel(quote_id, QuoteType.NEW, self.active_quote[user][1], ctx.created_at,
                                self.active_quote[user][0], user, self.active_quote[user][2])
             await gg.MDB.quote.insert_one(quote.to_dict())
-            await gg.MDB.members.update_one({"server": payload.guild_id, "user": user}, {"$set": member_db}, upsert=True)
+            await gg.MDB.members.update_one({"server": payload.guild_id, "user": user}, {"$set": member_db},
+                                            upsert=True)
             embed = await get_quote_embed(ctx, quote)
             await gg.RECORDERS[user].delete()
             await channel.send(embed=embed)
