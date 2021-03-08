@@ -93,9 +93,9 @@ class GlobalCommands(commands.Cog):
         user_quote = await GG.MDB['globalcommands'].find_one({"Guild": ctx.message.guild.id, "Trigger": trig})
         if user_quote is None:
             await ctx.send(content=":x:" + ' **Command with that trigger does not exist.**')
-        # else:
-        #     if ctx.guild and ctx.guild.me.permissions_in(ctx.channel).manage_messages:
-                # await ctx.message.delete()
+            # else:
+            #     if ctx.guild and ctx.guild.me.permissions_in(ctx.channel).manage_messages:
+            # await ctx.message.delete()
 
             await ctx.send(embed=global_embed(self, user_quote, ctx.author, ctx.message, trig))
 
@@ -118,7 +118,7 @@ class GlobalCommands(commands.Cog):
                     f"{ctx.author.mention} I tried DMing you, but you either blocked me, or you don't allow DM's")
         else:
             # if ctx.guild and ctx.guild.me.permissions_in(ctx.channel).manage_messages:
-                # await ctx.message.delete()
+            # await ctx.message.delete()
             try:
                 await DM.send(embed=global_embed(self, user_quote, ctx.author, ctx.message, trig, ctx.guild.name, True))
             except discord.Forbidden:
@@ -147,7 +147,7 @@ class GlobalCommands(commands.Cog):
             await ctx.send(content=":x:" + ' **Command with that trigger does not exist.**')
         else:
             # if ctx.guild and ctx.guild.me.permissions_in(ctx.channel).manage_messages:
-                # await ctx.message.delete()
+            # await ctx.message.delete()
 
             await ctx.send(f"```{user_quote['Response']}```", files=user_quote['Attachments'])
 

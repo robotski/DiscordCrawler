@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-import utils.globals as GG
+
 from utils import logger
 
 log = logger.logger

@@ -33,7 +33,8 @@ class Roles(commands.Cog):
                 GG.REACTION_ROLES = await GG.reload_reaction_roles()
             except:
                 await message.remove_reaction(emoji, ctx.guild.me)
-                await ctx.send(f"You are trying to add a reaction to the message that already exists, or the role it would give as reaction is already in use.\nPlease check if this is correct, if not, please contact my owner in `{self.bot.get_server_prefix(ctx.message)}support`")
+                await ctx.send(
+                    f"You are trying to add a reaction to the message that already exists, or the role it would give as reaction is already in use.\nPlease check if this is correct, if not, please contact my owner in `{self.bot.get_server_prefix(ctx.message)}support`")
 
     @commands.command()
     @commands.guild_only()

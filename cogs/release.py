@@ -245,5 +245,5 @@ class ReleaseModel:
 
     def __repr__(self):
         return "Title: %s\nSubtitle: %s\nSource: %s\nLink: %s\nType: %s\nMeta: %s\nAuthors: %s\nCredits: %s\nImage_Url: %s" % (
-        self.title, self.subtitle, self.source, self.link, self.type, self.meta, self.authors, self.credits,
-        self.image_url)
+            self.title, self.subtitle, self.source, self.link, self.type, self.meta, self.authors, self.credits,
+            self.image_url)

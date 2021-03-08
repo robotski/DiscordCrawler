@@ -2,8 +2,6 @@ import datetime
 import time
 
 import discord
-from discord import VerificationLevel as VL
-from discord import VoiceRegion as VR
 from discord.ext import commands
 
 import utils.globals as GG
