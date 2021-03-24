@@ -12,20 +12,19 @@ class QuoteType(IntEnum):
 
 
 class QuoteModel:
-    def __init__(self, quote_id: int, quote_type: QuoteType, message: List[str], date: datetime,
-                 author: List[Union[int, str]], submitter: int, jump_url: discord.Message.jump_url = None):
+    def __init__(self, quote_id: int, quote_type: QuoteType, message: List[str], date: datetime, author_id: int, author_name: str, submitter: int, jump_url: discord.Message.jump_url = None):
         self.quoteId = quote_id
         self.quoteType = quote_type
         self.message = message
         self.date = date
-        self.author = author
+        self.author_id = author_id
+        self.author_name = author_name
         self.submitter = submitter
         self.jump_url = jump_url
 
     @classmethod
     def from_data(cls, data):
-        return cls(data['quoteId'], data['quoteType'], data['message'], data['date'], data['author'], data['submitter'],
-                   data['jump_url'])
+        return cls(data['quoteId'], data['quoteType'], data['message'], data['date'], data['author_id'], data['author_name'], data['submitter'], data['jump_url'])
 
     def to_dict(self):
         return {
@@ -33,7 +32,8 @@ class QuoteModel:
             'quoteType': self.quoteType,
             'message': self.message,
             'date': self.date,
-            'author': self.author,
+            'author_id': self.author_id,
+            'author_name': self.author_name,
             'submitter': self.submitter,
             'jump_url': self.jump_url
         }
@@ -51,7 +51,10 @@ async def get_quote_embed(ctx, quote: QuoteModel):
         embed.colour = Colour.blue()
 
     for i in range(len(quote.message)):
-        author = quote.author[i]
+        if quote.author_id[i] is not None:
+            author = ctx.guild.get_member(author).display_name
+        else:
+            author = quote.author_name[i]
         message = quote.message[i]
         jump_url = quote.jump_url[i]
         if message == "":
@@ -59,8 +62,8 @@ async def get_quote_embed(ctx, quote: QuoteModel):
         if author is None:
             embed.add_field(name='\u200b', value=f"{message}", inline=False)
         else:
-            if isinstance(author, int):
-                author = ctx.guild.get_member(author).display_name
+            # if isinstance(author, int):
+            #     author = ctx.guild.get_member(author).display_name
             if jump_url is None:
                 embed.add_field(name=f"{author}:", value=f"{message}", inline=False)
             else:

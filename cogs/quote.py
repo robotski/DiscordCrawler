@@ -41,8 +41,7 @@ async def save_quote(ctx, member_db, message, quote_id):
                     del line_list[-1]
                 member_list.append(None)
                 line_list.append(line[0])
-        quote = QuoteModel(quote_id, QuoteType.OLD, line_list, ctx.message.created_at, member_list, ctx.author.id,
-                           [None] * len(line_list))
+        quote = QuoteModel(quote_id, QuoteType.OLD, line_list, ctx.message.created_at, member_list, author_name, ctx.author.id, [None] * len(line_list))
         await gg.MDB.quote.insert_one(quote.to_dict())
         await gg.MDB.members.update_one({"server": ctx.guild.id, "user": ctx.author.id}, {"$set": member_db},
                                         upsert=True)
@@ -110,7 +109,7 @@ class Quote(commands.Cog):
                 member_db['quoteIds'].append(quote_id)
 
             quote = QuoteModel(quote_id, QuoteType.NEW, self.active_quote[user][1], ctx.created_at,
-                               self.active_quote[user][0], user, self.active_quote[user][2])
+                               self.active_quote[user][0], author_name, user, self.active_quote[user][2])
             await gg.MDB.quote.insert_one(quote.to_dict())
             await gg.MDB.members.update_one({"server": payload.guild_id, "user": user}, {"$set": member_db},
                                             upsert=True)
