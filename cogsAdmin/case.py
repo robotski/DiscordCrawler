@@ -1,9 +1,9 @@
+import discord
 import typing
 
-import discord
+import utils.globals as GG
 from discord.ext import commands
 
-import utils.globals as GG
 from cogsAdmin.models.caseStatus import CaseStatus
 from cogsAdmin.models.caseType import CaseType
 from utils import logger
@@ -57,8 +57,7 @@ class Case(commands.Cog):
         if case is not None:
             msg = case['message']
             msg += f"\nCLOSED - {message}"
-            await GG.MDB.cases.update_one({"caseId": caseId}, {"$set": {"status": CaseStatus.CLOSED, "message": msg}},
-                                          upsert=False)
+            await GG.MDB.cases.update_one({"caseId": caseId}, {"$set": {"status": CaseStatus.CLOSED, "message": msg}}, upsert=False)
             await ctx.send(f"Case ``{caseId}`` was closed.")
         else:
             await ctx.send(f"There is no case with id: ``{caseId}``")
@@ -85,8 +84,8 @@ class Case(commands.Cog):
     @GG.is_staff()
     async def list_case(self, ctx, member: typing.Optional[discord.Member] = None):
         if member is None:
-            await ctx.send(f"Member can't be none. Proper command to use ``{self.bot.get_server_prefix(ctx.message)}case list [memberId]``")
-            return
+            return await ctx.send("Member can't be none. Proper command to use ``$case list [memberId]``")
+
         user = member
         guild = ctx.message.guild
         await guild.chunk()
