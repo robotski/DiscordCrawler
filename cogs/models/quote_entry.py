@@ -1,9 +1,10 @@
 from datetime import datetime
 from enum import IntEnum
-from typing import Union, List
+from typing import List
 
 import discord
 from discord import Colour
+from discord.ext import commands
 
 
 class QuoteType(IntEnum):
@@ -12,19 +13,23 @@ class QuoteType(IntEnum):
 
 
 class QuoteModel:
-    def __init__(self, quote_id: int, quote_type: QuoteType, message: List[str], date: datetime, author_id: int, author_name: str, submitter: int, jump_url: discord.Message.jump_url = None):
+    def __init__(self, quote_id: int, quote_type: QuoteType, message: List[str], date: datetime, author_id: List[int],
+                 author_name: List[str], submitter_id: int, submitter_name: str,
+                 jump_url: discord.Message.jump_url = None):
         self.quoteId = quote_id
         self.quoteType = quote_type
         self.message = message
         self.date = date
         self.author_id = author_id
         self.author_name = author_name
-        self.submitter = submitter
+        self.submitter_id = submitter_id
+        self.submitter_name = submitter_name
         self.jump_url = jump_url
 
     @classmethod
     def from_data(cls, data):
-        return cls(data['quoteId'], data['quoteType'], data['message'], data['date'], data['author_id'], data['author_name'], data['submitter'], data['jump_url'])
+        return cls(data['quoteId'], data['quoteType'], data['message'], data['date'], data['author_id'],
+                   data['author_name'], data['submitter_id'], data['submitter_name'], data['jump_url'])
 
     def to_dict(self):
         return {
@@ -34,15 +39,22 @@ class QuoteModel:
             'date': self.date,
             'author_id': self.author_id,
             'author_name': self.author_name,
-            'submitter': self.submitter,
+            'submitter_id': self.submitter_id,
+            'submitter_name': self.submitter_name,
             'jump_url': self.jump_url
         }
 
 
-async def get_quote_embed(ctx, quote: QuoteModel):
+async def get_quote_embed(bot: commands.Bot, ctx, quote: QuoteModel):
     embed = discord.Embed(description="")
     await ctx.guild.chunk()
-    submitter = await ctx.guild.fetch_member(quote.submitter)
+    submitter = bot.get_user(quote.submitter_id)
+    # submitter = await ctx.guild.fetch_member(quote.submitter_id)
+
+    if submitter is None:
+        submitter = quote.submitter_name
+    else:
+        submitter = submitter.display_name
 
     if quote.quoteType == QuoteType.OLD:
         embed.colour = Colour.gold()
@@ -52,7 +64,11 @@ async def get_quote_embed(ctx, quote: QuoteModel):
 
     for i in range(len(quote.message)):
         if quote.author_id[i] is not None:
-            author = ctx.guild.get_member(author).display_name
+            author = ctx.guild.get_member(quote.author_id[i])
+            if author is None:
+                author = quote.author_name[i]
+            else:
+                author = author.display_name
         else:
             author = quote.author_name[i]
         message = quote.message[i]
@@ -69,7 +85,7 @@ async def get_quote_embed(ctx, quote: QuoteModel):
             else:
                 embed.add_field(name=f"{author}:", value=f"{message}\n[Link]({jump_url})", inline=False)
 
-    embed.set_footer(text=f"Quote ID: {quote.quoteId} - Added by {submitter.display_name}")
+    embed.set_footer(text=f"Quote ID: {quote.quoteId} - Added by {submitter}")
     embed.timestamp = quote.date
     return embed
 
@@ -77,7 +93,7 @@ async def get_quote_embed(ctx, quote: QuoteModel):
 async def get_quote_author_embed(ctx, quote: QuoteModel):
     embed = discord.Embed()
     await ctx.guild.chunk()
-    submitter = await ctx.guild.fetch_member(quote.submitter)
+    submitter = await ctx.guild.fetch_member(quote.submitter_id)
 
     embed.title = "You have been "
     embed.description = f"The following message as included:\n\n``{quote.message}``\n\n"

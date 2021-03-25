@@ -1,6 +1,5 @@
 import datetime
 import re
-import traceback
 from datetime import datetime
 
 import discord
@@ -21,31 +20,44 @@ async def get_next_quote_num():
     return num
 
 
-async def save_quote(ctx, member_db, message, quote_id):
+async def save_quote(bot, ctx, member_db, message, quote_id):
     async with ctx.channel.typing():
-        member_list = []
+        member_id_list = []
+        member_name_list = []
         line_list = []
         curr = [[word for word in line.split(": ", 1)] for line in message.splitlines()]
         for line in curr:
             try:
                 member = (await ctx.guild.query_members(line[0]))
                 if len(member) != 0:
-                    member_list.append(member[0].id)
+                    member_id_list.append(member[0].id)
+                    member_name_list.append(member[0].display_name)
                 else:
-                    member_list.append(line[0])
+                    member_id_list.append(None)
+                    member_name_list.append(line[0])
                 line_list.append(line[1])
-            except Exception as e:
-                log.error(traceback.format_exc())
-                del member_list[-1]
-                if len(member_list) != len(line_list):
+            except IndexError as e:
+                log.info("quote.py -- save_quote() -- IndexError")
+                # log.error(traceback.format_exc())
+                del member_id_list[-1]
+                del member_name_list[-1]
+                if len(member_id_list) != len(line_list):
                     del line_list[-1]
-                member_list.append(None)
+                if len(member_name_list) != len(line_list):
+                    await ctx.send(
+                        f"Error: Uh oh, that wasn't supposed to happen! "
+                        f"**Something broke in save quote!**")
+                    log.error("Error caused by message: `{}`".format(ctx.message.content))
+                #     del line_list[-1]
+                member_id_list.append(None)
+                member_name_list.append(None)
                 line_list.append(line[0])
-        quote = QuoteModel(quote_id, QuoteType.OLD, line_list, ctx.message.created_at, member_list, author_name, ctx.author.id, [None] * len(line_list))
+        quote = QuoteModel(quote_id, QuoteType.OLD, line_list, ctx.message.created_at, member_id_list, member_name_list,
+                           ctx.author.id, ctx.author.display_name, [None] * len(line_list))
         await gg.MDB.quote.insert_one(quote.to_dict())
         await gg.MDB.members.update_one({"server": ctx.guild.id, "user": ctx.author.id}, {"$set": member_db},
                                         upsert=True)
-        embed = await get_quote_embed(ctx, quote)
+        embed = await get_quote_embed(bot, ctx, quote)
         await ctx.send(embed=embed)
 
 
@@ -108,12 +120,17 @@ class Quote(commands.Cog):
             else:
                 member_db['quoteIds'].append(quote_id)
 
+            author_name = []
+            for author in self.active_quote[user][0]:
+                author_name.append(ctx.guild.get_member(author).display_name)
+            user_name = ctx.guild.get_member(user).display_name
+
             quote = QuoteModel(quote_id, QuoteType.NEW, self.active_quote[user][1], ctx.created_at,
-                               self.active_quote[user][0], author_name, user, self.active_quote[user][2])
+                               self.active_quote[user][0], author_name, user, user_name, self.active_quote[user][2])
             await gg.MDB.quote.insert_one(quote.to_dict())
             await gg.MDB.members.update_one({"server": payload.guild_id, "user": user}, {"$set": member_db},
                                             upsert=True)
-            embed = await get_quote_embed(ctx, quote)
+            embed = await get_quote_embed(self.bot, ctx, quote)
             await gg.RECORDERS[user].delete()
             await channel.send(embed=embed)
             del gg.RECORDERS[user]
@@ -169,7 +186,7 @@ class Quote(commands.Cog):
         if quote:
             member_db, quote_id = await quote_db(ctx)
 
-            await save_quote(ctx, member_db, quote, quote_id)
+            await save_quote(self.bot, ctx, member_db, quote, quote_id)
             return
 
         if ctx.author.id in gg.RECORDERS:
@@ -194,13 +211,13 @@ class Quote(commands.Cog):
         member_db, quote_id = await quote_db(ctx)
 
         if quote:
-            await save_quote(ctx, member_db, quote, quote_id)
+            await save_quote(self.bot, ctx, member_db, quote, quote_id)
             return
 
         await ctx.send("What would you like the quote to be?")
         message = await self.bot.wait_for('message', check=check)
 
-        await save_quote(ctx, member_db, message.clean_content, quote_id)
+        await save_quote(self.bot, ctx, member_db, message.clean_content, quote_id)
 
     @commands.command(aliases=['q'])
     @commands.guild_only()
@@ -208,7 +225,7 @@ class Quote(commands.Cog):
         if msg_id is None:
             async with ctx.channel.typing():
                 quote = QuoteModel.from_data(await gg.MDB.quote.aggregate([{'$sample': {'size': 1}}]).next())
-                embed = await get_quote_embed(ctx, quote)
+                embed = await get_quote_embed(self.bot, ctx, quote)
                 await ctx.send(embed=embed)
                 return
 
@@ -228,7 +245,7 @@ class Quote(commands.Cog):
             await ctx.send(content=":x:" + ' **Could not find the specified message.**')
             return
         quote = QuoteModel.from_data(value)
-        embed = await get_quote_embed(ctx, quote)
+        embed = await get_quote_embed(self.bot, ctx, quote)
         await ctx.send(embed=embed)
         return
 

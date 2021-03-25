@@ -126,7 +126,7 @@ class Starboard(commands.Cog):
             #     em.color = discord.Colour(starboard.colour)
             em.description = message.system_content
             em.set_author(
-                name=author.display_name, url=message.jump_url, icon_url=str(author.avatar_url)
+                name=author.display_name, icon_url=str(author.avatar_url)
             )
             if message.attachments:
                 em.set_image(url=message.attachments[0].url)
