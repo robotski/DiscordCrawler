@@ -6,7 +6,7 @@ from discord.ext.commands.converter import Converter
 from discord.ext.commands.errors import BadArgument
 
 import utils.globals as GG
-from models.starboard_entry import StarboardEntry, StarboardMessage, FakePayload
+from cogs.models.starboard_entry import StarboardEntry, StarboardMessage, FakePayload
 from utils import logger
 
 log = logger.logger

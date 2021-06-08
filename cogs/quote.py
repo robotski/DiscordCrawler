@@ -6,7 +6,7 @@ import discord
 from discord.ext import commands
 
 import utils.globals as gg
-from models.quote_entry import QuoteModel, QuoteType, get_quote_embed
+from cogs.models.quote_entry import QuoteModel, QuoteType, get_quote_embed
 from utils import logger
 
 log = logger.logger

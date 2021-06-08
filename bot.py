@@ -8,7 +8,7 @@ import discord
 from discord.ext import commands
 
 import utils.globals as GG
-from models.quote_entry import QuoteModel
+from cogs.models.quote_entry import QuoteModel
 from utils import logger
 
 log = logger.logger

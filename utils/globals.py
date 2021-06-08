@@ -11,7 +11,7 @@ from discord import VoiceRegion
 from discord.ext import commands
 from environs import Env
 
-from models.starboard_entry import StarboardEntry
+from cogs.models.starboard_entry import StarboardEntry
 
 env = Env()
 env.read_env()
